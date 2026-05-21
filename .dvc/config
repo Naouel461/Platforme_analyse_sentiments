@@ -1,0 +1,14 @@
+[core]
+    remote = myremote
+['remote "minio"']
+    url = s3://sentiment-dvc
+    endpointurl = http://localhost:9000
+    access_key_id = minioadmin
+    secret_access_key = minioadmin123
+    use_ssl = false
+['remote "myremote"']
+    url = s3://sentiment-dvc
+    endpointurl = http://localhost:9000
+    access_key_id = minioadmin
+    secret_access_key = minioadmin123
+    use_ssl = false

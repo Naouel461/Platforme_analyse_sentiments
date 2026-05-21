@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analyseur de sentiments</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    /* Garde ton CSS actuel ici (inchangé) */
+  </style>
+</head>
+<body>
+  <!-- Garde ton HTML actuel ici (inchangé) -->
+
+  <script>
+    var apiUrl = "http://localhost:8000";
+
+    var btn = document.getElementById("btn-scan");
+    btn.addEventListener("click", lancerScan);
+
+    function verifierApi() {
+      fetch(apiUrl + "/health")
+        .then(function(res) {
+          if (res.ok) {
+            var badge = document.getElementById("badge-api");
+            badge.innerHTML = "● En ligne";
+            badge.classList.add("ok");
+            chargerDonnees();
+          }
+        })
+        .catch(function() {
+          console.log("API non disponible");
+        });
+    }
+
+   function demarrerCollecte() {
+    var mot = document.getElementById("mot_cle_recherche").value;
+    var qte = document.getElementById("quantite_limite").value;
+    var zone_message = document.getElementById("message_serveur");
+    
+    if (mot == "") {
+        alert("Veuillez écrire un mot clé !");
+        return;
+    }
+    
+    zone_message.innerHTML = "<em>🔍 Collecte en ligne en cours...</em>";
+    
+    // Nouvel endpoint dédié à la collecte web
+    fetch(adresse_serveur + "/collect-from-web", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mot_cle: mot, limite: parseInt(qte) })
+    })
+    .then(function(reponse) { return reponse.json(); })
+    .then(function(donnees) {
+        console.log("Collecte terminée:", donnees);
+        zone_message.innerHTML = `<span style='color:green;'>
+            ✅ ${donnees.total_trouve} avis trouvés sur le web, 
+            ${donnees.total_analyse} en cours d'analyse
+        </span>`;
+        setTimeout(recupererLesDonnees, 3000);
+    })
+    .catch(function(erreur) {
+        zone_message.innerHTML = "<span style='color:red;'>❌ Erreur lors de la collecte web</span>";
+    });
+}
+
+    function lancerScan() {
+      var motCle = document.getElementById("champ-kw").value.trim();
+      var nombre = document.getElementById("champ-nb").value;
+      var retour = document.getElementById("msg-retour");
+
+      if (motCle === "") {
+        retour.textContent = "Veuillez saisir un mot clé.";
+        return;
+      }
+
+      retour.textContent = "Traitement en cours...";
+
+      fetch(apiUrl + "/collect?mot_cle=" + encodeURIComponent(motCle) + "&nombre=" + nombre)
+        .then(function(res) {
+          if (res.ok) {
+            retour.innerHTML = '<span style="color:#4ecb8d">Analyse lancée.</span>';
+            setTimeout(function() {
+              chargerDonnees();
+            }, 1800);
+          } else {
+            retour.innerHTML = '<span style="color:#e8607a">Erreur lors du lancement.</span>';
+          }
+        })
+        .catch(function() {
+          retour.innerHTML = '<span style="color:#e8607a">Connexion échouée.</span>';
+        });
+    }
+
+    function afficherHistorique(liste) {
+      var bloc = document.getElementById("liste");
+      var compteur = document.getElementById("res-count");
+
+      if (!liste.length) {
+        bloc.innerHTML = '<div class="etat-vide">Aucun résultat disponible.</div>';
+        compteur.textContent = "— entrées";
+        return;
+      }
+
+      compteur.textContent = liste.length + " entrées";
+      var html = "";
+
+      for (var i = 0; i < liste.length; i++) {
+        var item = liste[i];
+        var type = item.label || "neutral";
+        var score = Math.round((item.score || 0) * 100);
+        var texte = nettoyer(item.content || item.text || "");
+        var cls = "neu";
+
+        if (type === "positive") cls = "pos";
+        if (type === "negative") cls = "neg";
+
+        html += '<div class="ligne-avis">';
+        html += '<div class="avis-meta">';
+        html += '<span class="etiq etiq-' + cls + '">' + type + '</span>';
+        html += '<div class="conf conf-' + cls + '">';
+        html += '<div class="conf-piste"><div class="conf-niveau" style="width:' + score + '%"></div></div>';
+        html += '<span class="conf-pct">' + score + '%</span>';
+        html += '</div></div>';
+        html += '<div class="avis-contenu">' + texte + '</div>';
+        html += '</div>';
+      }
+
+      bloc.innerHTML = html;
+    }
+
+    function nettoyer(txt) {
+      return txt.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    verifierApi();
+  </script>
+</body>
+</html>

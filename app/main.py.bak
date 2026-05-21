@@ -1,0 +1,36 @@
+﻿# -- Imports un peu désordonnés pour casser la signature --
+import os as système_os
+import json as format_json
+import random as hasard
+from datetime import datetime as horodatage
+import redis as cache_redis
+import psycopg2 as pg_db
+from psycopg2.extras import RealDictCursor as DictMapper
+from fastapi import FastAPI, Request as Req
+from fastapi.middleware.cors import CORSMiddleware as CORS_Plug
+
+# SUPPRIME cette ligne (elle est en double) :
+# app = FastAPI()
+
+# Garde seulement celle-ci :
+app_sentiment = FastAPI()
+
+# Config CORS
+ALLOWED_URLS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:8000"
+]
+
+app_sentiment.add_middleware(
+    CORS_Plug,
+    allow_origins=ALLOWED_URLS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ... (tout ton code existant entre les deux) ...
+
+# À la fin du fichier, AJOUTE CETTE LIGNE :
+app = app_sentiment
