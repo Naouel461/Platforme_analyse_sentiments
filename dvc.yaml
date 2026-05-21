@@ -1,0 +1,23 @@
+﻿stages:
+  collect_data:
+    cmd: python simple_collector.py --output data/raw/twitter_data.json
+    deps:
+      - simple_collector.py
+    outs:
+      - data/raw/twitter_data.json
+  
+  analyze_sentiment:
+    cmd: python simple_analyzer.py --input data/raw/twitter_data.json --output data/processed/sentiments.json
+    deps:
+      - simple_analyzer.py
+      - data/raw/twitter_data.json
+    outs:
+      - data/processed/sentiments.json
+  
+  generate_report:
+    cmd: python generate_report.py
+    deps:
+      - generate_report.py
+      - data/processed/sentiments.json
+    outs:
+      - data/processed/report.json

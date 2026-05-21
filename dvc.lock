@@ -1,0 +1,47 @@
+schema: '2.0'
+stages:
+  collect_data:
+    cmd: python simple_collector.py --output data/raw/twitter_data.json
+    deps:
+    - path: simple_collector.py
+      hash: md5
+      md5: 76de477804540f226622b686aa1c7c03
+      size: 1749
+    outs:
+    - path: data/raw/twitter_data.json
+      hash: md5
+      md5: fffbfa76054d789ebfca510de90033ff
+      size: 1299
+  analyze_sentiment:
+    cmd: python simple_analyzer.py --input data/raw/twitter_data.json --output 
+      data/processed/sentiments.json
+    deps:
+    - path: data/raw/twitter_data.json
+      hash: md5
+      md5: fffbfa76054d789ebfca510de90033ff
+      size: 1299
+    - path: simple_analyzer.py
+      hash: md5
+      md5: 78810c09f9cd3a7fd5810764f7f7cd12
+      size: 1855
+    outs:
+    - path: data/processed/sentiments.json
+      hash: md5
+      md5: e26dfdc9bcd20b8659c14f392fc738b8
+      size: 1781
+  generate_report:
+    cmd: python generate_report.py
+    deps:
+    - path: data/processed/sentiments.json
+      hash: md5
+      md5: e26dfdc9bcd20b8659c14f392fc738b8
+      size: 1781
+    - path: generate_report.py
+      hash: md5
+      md5: 962b8717c268dcb52f52a89f906d5a63
+      size: 880
+    outs:
+    - path: data/processed/report.json
+      hash: md5
+      md5: 917b1c65a2cf4902db142f8cb3af2a46
+      size: 69
