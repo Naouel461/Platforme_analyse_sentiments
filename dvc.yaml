@@ -6,11 +6,22 @@
     outs:
       - data/raw/twitter_data.json
   
+  preprocess:
+    cmd: python data/scripts/etl_pipeline.py data/raw/twitter_data.json data/processed
+    deps:
+      - data/scripts/etl_pipeline.py
+      - data/raw/twitter_data.json
+    outs:
+      - data/processed/train_data.json
+      - data/processed/val_data.json
+      - data/processed/test_data.json
+      - data/processed/metadata.json
+  
   analyze_sentiment:
-    cmd: python simple_analyzer.py --input data/raw/twitter_data.json --output data/processed/sentiments.json
+    cmd: python simple_analyzer.py --input data/processed/train_data.json --output data/processed/sentiments.json
     deps:
       - simple_analyzer.py
-      - data/raw/twitter_data.json
+      - data/processed/train_data.json
     outs:
       - data/processed/sentiments.json
   
