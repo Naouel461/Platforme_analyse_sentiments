@@ -1,0 +1,13 @@
+﻿twitter:
+  search_keywords: ["bonjour", "merci", "triste"]
+  max_tweets: 100
+  since_date: "2024-01-01"
+
+google:
+  search_terms: ["avis restaurant", "commentaire produit"]
+  max_results: 50
+
+analysis:
+  model_type: "camembert"
+  batch_size: 32
+  language: "fr"
