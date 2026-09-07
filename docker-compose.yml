@@ -1,0 +1,130 @@
+version: '3.8'
+
+# mon projet sentiment - stack complète
+# postgres + redis + minio + fastapi + nginx + worker
+
+services:
+
+  # --- base de données principale ---
+  db:
+    image: postgres:15
+    container_name: ma_base_de_donnees
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: Naouel
+      POSTGRES_PASSWORD: Pino2026
+      POSTGRES_DB: sentiment_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - donnee_postgres:/var/lib/postgresql/data
+    networks:
+      - mon_reseau_local
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U Naouel"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # cache rapide pour les jobs du worker
+  redis:
+    image: redis:7-alpine
+    container_name: cache_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - mon_reseau_local
+
+  # stockage fichiers type S3 (modèles, exports, etc.)
+  minio:
+    image: minio/minio:latest
+    container_name: mon_stockage_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    ports:
+      - "9000:9000"   # API S3
+      - "9001:9001"   # console web
+    volumes:
+      - donnee_minio:/data
+    networks:
+      - mon_reseau_local
+
+  # l'API python / fastapi
+  backend:
+    build: ./app
+    container_name: mon_code_python
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: Naouel
+      DB_PASSWORD: Pino2026
+      DB_NAME: sentiment_db
+      REDIS_HOST: redis
+      MINIO_HOST: minio:9000
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      minio:
+        condition: service_started
+    networks:
+      - mon_reseau_local
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 
+
+  # nginx sert le fichier HTML directement
+  frontend:
+    image: nginx:alpine
+    container_name: mon_interface_web
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    volumes:
+      - ./frontend/index.html:/usr/share/nginx/html/index.html:ro
+    depends_on:
+      - backend
+    networks:
+      - mon_reseau_local
+
+  # worker de collecte et d'analyse en arrière-plan
+  worker:
+    build: .
+    container_name: mon_worker
+    restart: unless-stopped
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: Naouel
+      DB_PASSWORD: Pino2026
+      DB_NAME: sentiment_db
+      REDIS_HOST: redis
+      MINIO_HOST: minio:9000
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      minio:
+        condition: service_started
+    networks:
+      - mon_reseau_local
+    command: python worker.py
+
+# volumes persistants
+volumes:
+  donnee_postgres:
+  donnee_minio:
+
+# réseau interne entre les services
+networks:
+  mon_reseau_local:
+    driver: bridge
