@@ -4,10 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SentimentFlow - Analyseur d'opinions</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
+
         :root {
             --primary: #6C63FF;
             --primary-dark: #5A52D5;
@@ -31,7 +30,7 @@
             display: flex;
             justify-content: center;
             padding: 40px 20px;
-            background-image: 
+            background-image:
                 radial-gradient(ellipse at 10% 20%, rgba(108, 99, 255, 0.08) 0%, transparent 60%),
                 radial-gradient(ellipse at 90% 80%, rgba(255, 101, 132, 0.06) 0%, transparent 60%),
                 radial-gradient(ellipse at 50% 50%, rgba(108, 99, 255, 0.03) 0%, transparent 70%);
@@ -50,6 +49,8 @@
             border-radius: var(--radius);
             border: 1px solid var(--border);
             margin-bottom: 48px;
+            flex-wrap: wrap;
+            gap: 16px;
         }
 
         .logo {
@@ -82,8 +83,31 @@
 
         .header-actions {
             display: flex;
-            gap: 12px;
+            gap: 20px;
             align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .nav-link {
+            color: var(--text);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 100px;
+            transition: all 0.3s ease;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+        }
+        .nav-link:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.2);
+            transform: translateY(-1px);
+        }
+        .nav-link.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #fff;
         }
 
         .badge-status {
@@ -169,9 +193,11 @@
             display: flex;
             gap: 10px;
             align-items: center;
+            flex-wrap: wrap;
         }
         .search-row input {
             flex: 1;
+            min-width: 150px;
             padding: 16px 20px;
             background: transparent;
             border: none;
@@ -406,29 +432,32 @@
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .results-section { padding: 20px; }
             .result-top { flex-direction: column; align-items: flex-start; }
+            .nav-link { font-size: 12px; padding: 6px 12px; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- HEADER -->
+        <!-- ===== HEADER ===== -->
         <header class="header">
             <a class="logo" href="#">
-                <div class="logo-icon">◆</div>
+                <div class="logo-icon">✦</div>
                 <span class="logo-text"><span>Analyseur</span> des sentiment</span>
             </a>
             <div class="header-actions">
-                <span class="badge-status online" id="badge-api">Service actif</span>
+                <a href="dashboard.html" class="nav-link">📊 Dashboard</a>
+                <a href="admin.html" class="nav-link">⚙️ Admin</a>
+                <span class="badge-status offline" id="badge-api">Hors ligne</span>
             </div>
         </header>
 
-        <!-- HERO -->
+        <!-- ===== HERO ===== -->
         <section class="hero">
             <h1>Découvrez ce que les visiteurs <span class="highlight">pensent vraiment</span></h1>
-            <p>Analysez les avis en temps réel. </p>
+            <p>Analysez les avis en temps réel.</p>
         </section>
 
-        <!-- SEARCH -->
+        <!-- ===== SEARCH ===== -->
         <div class="search-wrapper">
             <div class="search-row">
                 <input type="text" id="searchInput" placeholder="Ex: Mytek, Tunisie, Restaurant..." />
@@ -443,7 +472,7 @@
             <div id="message" class="message-box"></div>
         </div>
 
-        <!-- STATS -->
+        <!-- ===== STATS ===== -->
         <div class="stats-grid" id="statsContainer">
             <div class="stat-card pos"><div class="number" id="statPositive">0</div><div class="label">✅ Positifs</div></div>
             <div class="stat-card neg"><div class="number" id="statNegative">0</div><div class="label">❌ Négatifs</div></div>
@@ -451,15 +480,15 @@
             <div class="stat-card tot"><div class="number" id="statTotal">0</div><div class="label">📊 Total</div></div>
         </div>
 
-        <!-- CHART -->
+        <!-- ===== CHART ===== -->
         <div class="chart-box" id="chartContainer">
             <canvas id="sentimentChart"></canvas>
         </div>
 
-        <!-- RESULTS -->
+        <!-- ===== RESULTS ===== -->
         <div class="results-section" id="resultsSection">
             <div class="results-header">
-                <h2 id="resultTitle">📝 Résultats</h2>
+                <h2 id="resultTitle">📋 Résultats</h2>
                 <span class="count" id="resultCount">0 avis</span>
             </div>
             <div id="resultsList">
@@ -468,8 +497,9 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        const API_URL = "http://127.0.0.1:8002";
+        const API_URL = "https://sentiment-api.onrender.com";
         let chartInstance = null;
 
         // DOM refs
@@ -504,7 +534,7 @@
             } catch {
                 document.getElementById('badge-api').className = 'badge-status offline';
                 document.getElementById('badge-api').textContent = 'Hors ligne';
-                showMessage('error', 'Impossible de contacter le serveur. Vérifiez que l\'API est démarrée.');
+                showMessage('error', 'Impossible de contacter le serveur.');
             }
         }
 
@@ -564,7 +594,7 @@
 
             renderChart(positifs, negatifs, neutres);
 
-            resultTitle.textContent = `📝 Résultats pour "${motCle}"`;
+            resultTitle.textContent = `📋 Résultats pour "${motCle}"`;
             resultCount.textContent = `${total} avis`;
 
             let html = '';

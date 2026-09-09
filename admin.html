@@ -51,6 +51,30 @@
         .admin-header h1 span { color: var(--secondary); }
         .admin-header .sub { color: var(--muted); font-weight: 400; font-size: 14px; }
 
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .nav-link {
+            color: var(--text);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 100px;
+            transition: all 0.3s ease;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+        }
+        .nav-link:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.2);
+            transform: translateY(-1px);
+        }
+
         /* AUTH */
         .auth-box {
             background: var(--card);
@@ -181,13 +205,17 @@
         <!-- HEADER -->
         <div class="admin-header">
             <h1>🔐 <span>Administration</span> <span class="sub">• Tableau de bord </span></h1>
+            <div class="header-actions">
+                <a href="index.html" class="nav-link">🏠 Accueil</a>
+                <a href="dashboard.html" class="nav-link">📊 Dashboard</a>
+            </div>
         </div>
 
         <!-- AUTH -->
         <div class="auth-box">
             <label>🔑 Clé API</label>
             <input type="password" id="apiKey" placeholder="Saisissez votre clé d'accès" />
-            <button class="btn-auth" onclick="loadAdminStats()">📊 Charger</button>
+            <button class="btn-auth" onclick="loadAdminStats()">🔓 Charger</button>
             <div id="authMessage" class="msg-auth info">🔐 Veuillez vous authentifier</div>
         </div>
 
@@ -207,7 +235,7 @@
 
         <!-- FEEDBACK -->
         <div class="feedback-card">
-            <h3>👍 Feedback utilisateur</h3>
+            <h3>💬 Feedback utilisateur</h3>
             <div class="btn-group">
                 <button class="btn-fb green" onclick="sendFeedback('positif')">👍 Utile</button>
                 <button class="btn-fb red" onclick="sendFeedback('negatif')">👎 Pas utile</button>
@@ -217,7 +245,7 @@
     </div>
 
     <script>
-        const API_URL = "http://localhost:8002";
+        const API_URL = "https://sentiment-api.onrender.com";
         let dailyChart = null, pieChart = null;
 
         function showAuthMsg(type, text) {
@@ -336,9 +364,6 @@
                 msg.style.color = '#E8607A';
             }
         }
-
-        // Auto-load with default key if you want
-        // document.getElementById('apiKey').value = 'Cle_naouel_2026';
     </script>
 </body>
 </html>
