@@ -1,17 +1,19 @@
 ﻿FROM python:3.11-slim
 
-# Définir le dossier de travail dans le conteneur
+# Définir le dossier de travail
 WORKDIR /app
 
-# Copier le fichier des dépendances
-COPY worker/requirements.txt /app/requirements.txt
+# Copier les requirements
+COPY requirements.txt /app/requirements.txt
 
-# Installer les bibliothèques nécessaires au worker
-RUN pip install -r requirements.txt
+# Installer les dépendances
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copier les scripts Python du service
-COPY worker/worker.py /app/worker.py
-COPY sentiment_analyzer.py /app/sentiment_analyzer.py
+# Copier tout le code
+COPY . /app
 
-# Exécuter le worker au démarrage du conteneur
-CMD ["python", "worker.py"]
+# Exposer le port
+EXPOSE 8000
+
+# Lancer l'API UNIQUEMENT (pas le worker !)
+CMD cd /app && uvicorn app.main:app --host 0.0.0.0 --port 8000
