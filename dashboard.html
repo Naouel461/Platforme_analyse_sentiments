@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de bord - SentimentFlow</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #0A0D1A;
+            --card: rgba(255,255,255,0.04);
+            --border: rgba(255,255,255,0.07);
+            --text: #EAEDF5;
+            --muted: #8892A8;
+            --primary: #6C63FF;
+            --secondary: #FF6584;
+            --radius: 20px;
+            --shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 30px 20px;
+            background-image: 
+                radial-gradient(ellipse at 20% 30%, rgba(108,99,255,0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 70%, rgba(255,101,132,0.04) 0%, transparent 60%);
+        }
+
+        .container { max-width: 1400px; margin: 0 auto; }
+
+        /* HEADER */
+        .dash-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 32px;
+            background: var(--card);
+            backdrop-filter: blur(20px);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .dash-header h1 {
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        .dash-header h1 span { color: var(--secondary); }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .header-actions .update-time {
+            color: var(--muted);
+            font-size: 14px;
+        }
+        .btn-refresh {
+            padding: 10px 24px;
+            background: var(--primary);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        .btn-refresh:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(108,99,255,0.3);
+        }
+
+        /* STATS */
+        .stats-dash {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        .stat-item {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px 20px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .stat-item:hover { border-color: rgba(255,255,255,0.12); }
+        .stat-item .num {
+            font-size: 38px;
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+        .stat-item .lbl {
+            color: var(--muted);
+            font-size: 14px;
+            margin-top: 4px;
+        }
+        .stat-item.green .num { color: #4ECB8D; }
+        .stat-item.red .num { color: #E8607A; }
+        .stat-item.yellow .num { color: #FFD93D; }
+        .stat-item.blue .num { color: #64B5F6; }
+
+        /* CHARTS */
+        .charts-dash {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        .chart-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+        }
+        .chart-card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--muted);
+            margin-bottom: 16px;
+        }
+        .chart-card .chart-wrap { height: 280px; }
+
+        /* TABLE */
+        .history-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+        }
+        .history-card h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--muted);
+            margin-bottom: 16px;
+        }
+        .history-scroll { max-height: 380px; overflow-y: auto; }
+        .history-scroll::-webkit-scrollbar { width: 4px; }
+        .history-scroll::-webkit-scrollbar-track { background: transparent; }
+        .history-scroll::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .history-table th {
+            text-align: left;
+            padding: 12px 16px;
+            color: var(--muted);
+            font-weight: 500;
+            font-size: 13px;
+            border-bottom: 1px solid var(--border);
+        }
+        .history-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            font-size: 14px;
+        }
+        .history-table .tag {
+            padding: 3px 14px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .tag.pos { background: rgba(78,203,141,0.15); color: #4ECB8D; }
+        .tag.neg { background: rgba(232,96,122,0.15); color: #E8607A; }
+        .tag.neu { background: rgba(255,217,61,0.15); color: #FFD93D; }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--muted);
+        }
+        .empty-state .icon { font-size: 40px; display: block; margin-bottom: 12px; }
+
+        @media (max-width: 768px) {
+            .stats-dash { grid-template-columns: repeat(2, 1fr); }
+            .charts-dash { grid-template-columns: 1fr; }
+            .dash-header { flex-direction: column; align-items: stretch; text-align: center; }
+            .header-actions { justify-content: center; flex-wrap: wrap; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <div class="dash-header">
+            <h1>📊 <span>Tableau de bord</span> • Analyse en temps réel</h1>
+            <div class="header-actions">
+                <span class="update-time" id="lastUpdate">⏳ Chargement...</span>
+                <button class="btn-refresh" onclick="loadDashboard()">🔄 Actualiser</button>
+            </div>
+        </div>
+
+        <!-- STATS -->
+        <div class="stats-dash" id="statsGrid">
+            <div class="stat-item green"><div class="num" id="dashPos">0</div><div class="lbl">✅ Positifs</div></div>
+            <div class="stat-item red"><div class="num" id="dashNeg">0</div><div class="lbl">❌ Négatifs</div></div>
+            <div class="stat-item yellow"><div class="num" id="dashNeu">0</div><div class="lbl">⚪ Neutres</div></div>
+            <div class="stat-item blue"><div class="num" id="dashTot">0</div><div class="lbl">📊 Total</div></div>
+        </div>
+
+        <!-- CHARTS -->
+        <div class="charts-dash">
+            <div class="chart-card">
+                <h3>🎯 Répartition des sentiments</h3>
+                <div class="chart-wrap"><canvas id="pieChart"></canvas></div>
+            </div>
+            <div class="chart-card">
+                <h3>📊 Distribution des analyses</h3>
+                <div class="chart-wrap"><canvas id="barChart"></canvas></div>
+            </div>
+        </div>
+
+        <!-- HISTORY -->
+        <div class="history-card">
+            <h3>📋 Dernières analyses (50 dernières)</h3>
+            <div class="history-scroll" id="historyContainer">
+                <div class="empty-state"><span class="icon">📭</span>Aucune donnée disponible</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = = "/api";
+        let chartPie = null, chartBar = null;
+
+        async function loadDashboard() {
+            document.getElementById('lastUpdate').textContent = '⏳ Chargement...';
+
+            try {
+                const statsRes = await fetch(`${API_URL}/stats`);
+                const statsData = await statsRes.json();
+
+                if (statsData && statsData.total !== undefined) {
+                    const total = statsData.total || 0;
+                    const repartition = statsData.repartition || [];
+                    let pos = 0, neg = 0, neu = 0;
+                    repartition.forEach(item => {
+                        if (item.sentiment === 'POSITIVE') pos = item.count || 0;
+                        else if (item.sentiment === 'NEGATIVE') neg = item.count || 0;
+                        else neu = item.count || 0;
+                    });
+
+                    document.getElementById('dashPos').textContent = pos;
+                    document.getElementById('dashNeg').textContent = neg;
+                    document.getElementById('dashNeu').textContent = neu;
+                    document.getElementById('dashTot').textContent = total;
+
+                    renderCharts(pos, neg, neu);
+                }
+
+                // History
+                const histRes = await fetch(`${API_URL}/historique?limit=50`);
+                const histData = await histRes.json();
+                renderHistory(histData.data || []);
+
+                document.getElementById('lastUpdate').textContent = '🔄 ' + new Date().toLocaleTimeString();
+
+            } catch (e) {
+                console.error('Erreur:', e);
+                document.getElementById('lastUpdate').textContent = '⚠️ Erreur de chargement';
+                document.getElementById('historyContainer').innerHTML = 
+                    '<div class="empty-state"><span class="icon">⚠️</span>Erreur de connexion</div>';
+            }
+        }
+
+        function renderCharts(pos, neg, neu) {
+            // Pie
+            const ctxPie = document.getElementById('pieChart').getContext('2d');
+            if (chartPie) chartPie.destroy();
+            chartPie = new Chart(ctxPie, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Positifs', 'Négatifs', 'Neutres'],
+                    datasets: [{ data: [pos, neg, neu], backgroundColor: ['#4ECB8D','#E8607A','#FFD93D'], borderWidth: 0 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#EAEDF5' } } } }
+            });
+
+            // Bar
+            const ctxBar = document.getElementById('barChart').getContext('2d');
+            if (chartBar) chartBar.destroy();
+            chartBar = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: ['Positifs', 'Négatifs', 'Neutres'],
+                    datasets: [{
+                        label: 'Nombre d\'analyses',
+                        data: [pos, neg, neu],
+                        backgroundColor: ['rgba(78,203,141,0.7)', 'rgba(232,96,122,0.7)', 'rgba(255,217,61,0.7)'],
+                        borderColor: ['#4ECB8D', '#E8607A', '#FFD93D'],
+                        borderWidth: 2,
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { color: '#8892A8' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                        x: { ticks: { color: '#8892A8' }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function renderHistory(data) {
+            const container = document.getElementById('historyContainer');
+            if (!data || data.length === 0) {
+                container.innerHTML = '<div class="empty-state"><span class="icon">📭</span>Aucune donnée disponible</div>';
+                return;
+            }
+
+            let html = `<table class="history-table">
+                <thead><tr><th>Texte</th><th>Sentiment</th><th>Confiance</th></tr></thead><tbody>`;
+            data.slice(0, 30).forEach(item => {
+                const s = (item.sentiment || 'neutral').toLowerCase();
+                const label = s === 'positive' ? 'POS' : s === 'negative' ? 'NEG' : 'NEU';
+                const cls = s === 'positive' ? 'pos' : s === 'negative' ? 'neg' : 'neu';
+                const text = (item.text || '').substring(0, 55) + ((item.text || '').length > 55 ? '...' : '');
+                const conf = (item.confidence || 0) * 100;
+                html += `<tr>
+                    <td>${text}</td>
+                    <td><span class="tag ${cls}">${label}</span></td>
+                    <td>${conf.toFixed(0)}%</td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // Initial load
+        loadDashboard();
+
+        // Auto-refresh every 30s
+        setInterval(loadDashboard, 30000);
+    </script>
+</body>
+</html>
