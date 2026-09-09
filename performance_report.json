@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-09-09T04:14:06.704483",
+  "total_requests": 100,
+  "concurrent": 10,
+  "success": 100,
+  "failed": 0,
+  "total_time": 1.8888556957244873,
+  "avg_time": 0.1793517804145813,
+  "requests_per_sec": 52.94210681438219,
+  "min_time": 0.025063753128051758,
+  "max_time": 0.3151895999908447,
+  "median_time": 0.19211697578430176
+}

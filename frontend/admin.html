@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administration - SentimentFlow</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #080B16;
+            --card: rgba(255,255,255,0.04);
+            --border: rgba(255,255,255,0.07);
+            --text: #EAEDF5;
+            --muted: #7A849C;
+            --primary: #6C63FF;
+            --secondary: #FF6584;
+            --success: #4ECB8D;
+            --danger: #E8607A;
+            --warning: #FFD93D;
+            --radius: 18px;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 30px 20px;
+            background-image: radial-gradient(ellipse at 50% 0%, rgba(108,99,255,0.05) 0%, transparent 60%);
+        }
+
+        .container { max-width: 1400px; margin: 0 auto; }
+
+        /* HEADER */
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 32px;
+            background: var(--card);
+            backdrop-filter: blur(20px);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .admin-header h1 { font-size: 24px; font-weight: 700; }
+        .admin-header h1 span { color: var(--secondary); }
+        .admin-header .sub { color: var(--muted); font-weight: 400; font-size: 14px; }
+
+        /* AUTH */
+        .auth-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px 32px;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .auth-box label {
+            color: var(--muted);
+            font-weight: 500;
+            font-size: 14px;
+        }
+        .auth-box input {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px 18px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 14px;
+            outline: none;
+            transition: 0.3s;
+        }
+        .auth-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(108,99,255,0.15); }
+        .auth-box .btn-auth {
+            padding: 12px 28px;
+            background: var(--primary);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 14px;
+        }
+        .auth-box .btn-auth:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(108,99,255,0.3); }
+
+        .msg-auth {
+            padding: 12px 18px;
+            border-radius: 12px;
+            font-size: 14px;
+            display: none;
+        }
+        .msg-auth.success { display: block; background: rgba(78,203,141,0.12); color: var(--success); border: 1px solid rgba(78,203,141,0.15); }
+        .msg-auth.error { display: block; background: rgba(232,96,122,0.12); color: var(--danger); border: 1px solid rgba(232,96,122,0.15); }
+        .msg-auth.info { display: block; background: rgba(108,99,255,0.08); color: var(--primary); border: 1px solid rgba(108,99,255,0.1); }
+
+        /* STATS */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 22px 20px;
+            text-align: center;
+        }
+        .stat-card .num { font-size: 34px; font-weight: 700; letter-spacing: -0.5px; }
+        .stat-card .lbl { color: var(--muted); font-size: 13px; margin-top: 2px; }
+        .stat-card.green .num { color: var(--success); }
+        .stat-card.red .num { color: var(--danger); }
+        .stat-card.yellow .num { color: var(--warning); }
+        .stat-card.blue .num { color: #64B5F6; }
+        .stat-card.purple .num { color: var(--primary); }
+
+        /* CHARTS */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        .chart-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+        }
+        .chart-card h3 { font-size: 15px; font-weight: 600; color: var(--muted); margin-bottom: 16px; }
+        .chart-card .wrap { height: 270px; }
+
+        /* FEEDBACK */
+        .feedback-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+        }
+        .feedback-card h3 { font-size: 15px; font-weight: 600; color: var(--muted); margin-bottom: 16px; }
+        .feedback-card .btn-group { display: flex; gap: 12px; flex-wrap: wrap; }
+        .feedback-card .btn-fb {
+            padding: 10px 28px;
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 14px;
+        }
+        .btn-fb.green { background: var(--success); }
+        .btn-fb.red { background: var(--danger); }
+        .btn-fb:hover { transform: translateY(-2px); }
+        .btn-fb.green:hover { box-shadow: 0 8px 25px rgba(78,203,141,0.3); }
+        .btn-fb.red:hover { box-shadow: 0 8px 25px rgba(232,96,122,0.3); }
+        .feedback-card .fb-msg { color: var(--muted); font-size: 14px; margin-left: 16px; }
+
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .charts-grid { grid-template-columns: 1fr; }
+            .auth-box { flex-direction: column; align-items: stretch; }
+            .admin-header { flex-direction: column; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <div class="admin-header">
+            <h1>🔐 <span>Administration</span> <span class="sub">• Tableau de bord </span></h1>
+        </div>
+
+        <!-- AUTH -->
+        <div class="auth-box">
+            <label>🔑 Clé API</label>
+            <input type="password" id="apiKey" placeholder="Saisissez votre clé d'accès" />
+            <button class="btn-auth" onclick="loadAdminStats()">📊 Charger</button>
+            <div id="authMessage" class="msg-auth info">🔐 Veuillez vous authentifier</div>
+        </div>
+
+        <!-- STATS -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card blue"><div class="num" id="adminTotal">0</div><div class="lbl">📊 Total analyses</div></div>
+            <div class="stat-card green"><div class="num" id="adminPos">0</div><div class="lbl">✅ Positifs</div></div>
+            <div class="stat-card red"><div class="num" id="adminNeg">0</div><div class="lbl">❌ Négatifs</div></div>
+            <div class="stat-card purple"><div class="num" id="adminRate">0%</div><div class="lbl">📈 Taux satisfaction</div></div>
+        </div>
+
+        <!-- CHARTS -->
+        <div class="charts-grid">
+            <div class="chart-card"><h3>📊 Prédictions par jour (7 derniers jours)</h3><div class="wrap"><canvas id="dailyChart"></canvas></div></div>
+            <div class="chart-card"><h3>🎯 Répartition des sentiments</h3><div class="wrap"><canvas id="pieChart"></canvas></div></div>
+        </div>
+
+        <!-- FEEDBACK -->
+        <div class="feedback-card">
+            <h3>👍 Feedback utilisateur</h3>
+            <div class="btn-group">
+                <button class="btn-fb green" onclick="sendFeedback('positif')">👍 Utile</button>
+                <button class="btn-fb red" onclick="sendFeedback('negatif')">👎 Pas utile</button>
+                <span class="fb-msg" id="fbMessage"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "http://localhost:8002";
+        let dailyChart = null, pieChart = null;
+
+        function showAuthMsg(type, text) {
+            const el = document.getElementById('authMessage');
+            el.className = 'msg-auth ' + type;
+            el.textContent = text;
+        }
+
+        async function loadAdminStats() {
+            const key = document.getElementById('apiKey').value.trim();
+            if (!key) { showAuthMsg('error', 'Veuillez saisir votre clé API'); return; }
+            showAuthMsg('info', '⏳ Chargement...');
+
+            try {
+                const res = await fetch(`${API_URL}/admin/stats`, { headers: { 'X-API-Key': key } });
+                if (!res.ok) {
+                    const err = await res.json();
+                    showAuthMsg('error', `❌ ${err.detail || 'Accès refusé'}`);
+                    return;
+                }
+                const data = await res.json();
+                if (data.status !== 'success') { showAuthMsg('error', '❌ Erreur de chargement'); return; }
+
+                showAuthMsg('success', '✅ Données chargées avec succès');
+
+                const stats = data.data || {};
+                const total = stats.total || 0;
+                const repartition = stats.repartition || [];
+                const daily = stats.daily || [];
+
+                let pos = 0, neg = 0, neu = 0;
+                repartition.forEach(item => {
+                    if (item.sentiment === 'POSITIVE') pos = item.count || 0;
+                    else if (item.sentiment === 'NEGATIVE') neg = item.count || 0;
+                    else neu = item.count || 0;
+                });
+
+                document.getElementById('adminTotal').textContent = total;
+                document.getElementById('adminPos').textContent = pos;
+                document.getElementById('adminNeg').textContent = neg;
+                const taux = (pos + neg + neu) > 0 ? Math.round((pos / (pos + neg + neu)) * 100) : 0;
+                document.getElementById('adminRate').textContent = taux + '%';
+
+                renderDailyChart(daily);
+                renderPieChart(pos, neg, neu);
+
+            } catch (e) {
+                showAuthMsg('error', '❌ Erreur réseau: ' + e.message);
+            }
+        }
+
+        function renderDailyChart(daily) {
+            const ctx = document.getElementById('dailyChart').getContext('2d');
+            if (dailyChart) dailyChart.destroy();
+
+            if (!daily || daily.length === 0) {
+                dailyChart = new Chart(ctx, { type: 'bar', data: { labels: ['Aucune donnée'], datasets: [{ data: [0], backgroundColor: 'rgba(255,255,255,0.05)' }] } });
+                return;
+            }
+
+            const sorted = [...daily].sort((a,b) => new Date(a.jour) - new Date(b.jour));
+            const labels = sorted.map(d => d.jour);
+            const pos = sorted.map(d => parseInt(d.positifs) || 0);
+            const neg = sorted.map(d => parseInt(d.negatifs) || 0);
+            const neu = sorted.map(d => parseInt(d.neutres) || 0);
+
+            dailyChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Positifs', data: pos, backgroundColor: 'rgba(78,203,141,0.7)', borderColor: '#4ECB8D', borderWidth: 1 },
+                        { label: 'Négatifs', data: neg, backgroundColor: 'rgba(232,96,122,0.7)', borderColor: '#E8607A', borderWidth: 1 },
+                        { label: 'Neutres', data: neu, backgroundColor: 'rgba(255,217,61,0.7)', borderColor: '#FFD93D', borderWidth: 1 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { stacked: true, ticks: { color: '#7A849C' }, grid: { display: false } },
+                        y: { stacked: true, ticks: { color: '#7A849C' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+                    },
+                    plugins: { legend: { labels: { color: '#EAEDF5' } } }
+                }
+            });
+        }
+
+        function renderPieChart(pos, neg, neu) {
+            const ctx = document.getElementById('pieChart').getContext('2d');
+            if (pieChart) pieChart.destroy();
+            pieChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Positifs', 'Négatifs', 'Neutres'],
+                    datasets: [{ data: [pos, neg, neu], backgroundColor: ['#4ECB8D','#E8607A','#FFD93D'], borderWidth: 0 }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#EAEDF5', padding: 16 } } }
+                }
+            });
+        }
+
+        async function sendFeedback(type) {
+            const msg = document.getElementById('fbMessage');
+            try {
+                const res = await fetch(`${API_URL}/feedback?sentiment=${type}`, { method: 'POST' });
+                const data = await res.json();
+                msg.textContent = `✅ ${data.message || 'Feedback enregistré'}`;
+                msg.style.color = '#4ECB8D';
+                setTimeout(() => { msg.textContent = ''; }, 3000);
+            } catch (e) {
+                msg.textContent = `❌ Erreur: ${e.message}`;
+                msg.style.color = '#E8607A';
+            }
+        }
+
+        // Auto-load with default key if you want
+        // document.getElementById('apiKey').value = 'Cle_naouel_2026';
+    </script>
+</body>
+</html>

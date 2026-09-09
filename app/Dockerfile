@@ -13,11 +13,13 @@ RUN apt-get update && apt-get install -y \
 
 # --- Installation des packages ---
 # On copie d'abord le fichier de dépendances
-COPY requirements.txt /app/requirements.txt
-
+COPY app/requirements.txt /app/requirements.txt
 # On installe tout, et on rajoute redis manuellement (oublié dans le txt ?)
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt redis
+
+RUN playwright install chromium
+RUN playwright install-deps
 
 # --- Code source ---
 # On récupère tout le reste du projet ici

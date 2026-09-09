@@ -1,5 +1,3 @@
-version: '3.8'
-
 # mon projet sentiment - stack complète
 # postgres + redis + minio + fastapi + nginx + worker
 
@@ -55,13 +53,17 @@ services:
 
   # l'API python / fastapi
   backend:
-    build: ./app
+    build:
+      context: .
+      dockerfile: app/Dockerfile
     container_name: mon_code_python
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "8002:8000"
     volumes:
       - ./app:/app
+      - ./collectors:/app/collectors
+      - ./src:/app/src
     environment:
       DB_HOST: db
       DB_PORT: 5432
@@ -79,7 +81,7 @@ services:
         condition: service_started
     networks:
       - mon_reseau_local
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
 
   # nginx sert le fichier HTML directement
   frontend:
@@ -89,7 +91,7 @@ services:
     ports:
       - "3000:80"
     volumes:
-      - ./frontend/index.html:/usr/share/nginx/html/index.html:ro
+      - ./frontend:/usr/share/nginx/html:ro   # TOUT le dossier frontend
     depends_on:
       - backend
     networks:
