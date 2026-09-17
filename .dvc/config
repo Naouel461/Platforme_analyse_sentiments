@@ -1,5 +1,6 @@
 [core]
-    remote = mon_stockage
+    remote = myremote
+    autostage = true
 ['remote "mon_coffre"']
     url = s3://dvc-bucket
     endpointurl = http://localhost:9000
@@ -10,3 +11,5 @@
     endpointurl = http://localhost:9000
     access_key_id = minioadmin
     secret_access_key = minioadmin123
+['remote "myremote"']
+    url = D:\dvc_storage
