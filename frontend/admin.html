@@ -7,118 +7,67 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         :root {
-            --bg: #080B16;
-            --card: rgba(255,255,255,0.04);
-            --border: rgba(255,255,255,0.07);
-            --text: #EAEDF5;
-            --muted: #7A849C;
-            --primary: #6C63FF;
-            --secondary: #FF6584;
-            --success: #4ECB8D;
-            --danger: #E8607A;
-            --warning: #FFD93D;
-            --radius: 18px;
+            --bg: #080B16; --card: rgba(255,255,255,0.04); --border: rgba(255,255,255,0.07);
+            --text: #EAEDF5; --muted: #7A849C; --primary: #6C63FF; --secondary: #FF6584;
+            --success: #4ECB8D; --danger: #E8607A; --warning: #FFD93D; --radius: 18px;
         }
-
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            padding: 30px 20px;
+            background: var(--bg); color: var(--text);
+            min-height: 100vh; padding: 30px 20px;
             background-image: radial-gradient(ellipse at 50% 0%, rgba(108,99,255,0.05) 0%, transparent 60%);
         }
-
         .container { max-width: 1400px; margin: 0 auto; }
 
-        /* HEADER */
         .admin-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 32px;
-            background: var(--card);
-            backdrop-filter: blur(20px);
-            border-radius: var(--radius);
-            border: 1px solid var(--border);
-            margin-bottom: 32px;
-            flex-wrap: wrap;
-            gap: 16px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 20px 32px; background: var(--card);
+            backdrop-filter: blur(20px); border-radius: var(--radius);
+            border: 1px solid var(--border); margin-bottom: 32px;
+            flex-wrap: wrap; gap: 16px;
         }
         .admin-header h1 { font-size: 24px; font-weight: 700; }
         .admin-header h1 span { color: var(--secondary); }
         .admin-header .sub { color: var(--muted); font-weight: 400; font-size: 14px; }
+        .header-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+        .nav-link {
+            color: var(--text); text-decoration: none;
+            font-size: 14px; font-weight: 500; padding: 8px 16px;
+            border-radius: 100px; transition: all 0.3s ease;
+            background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+        }
+        .nav-link:hover { background: rgba(255,255,255,0.1); transform: translateY(-1px); }
 
-        /* AUTH */
         .auth-box {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 24px 32px;
-            margin-bottom: 32px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            flex-wrap: wrap;
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 24px 32px;
+            margin-bottom: 32px; display: flex; align-items: center;
+            gap: 16px; flex-wrap: wrap;
         }
-        .auth-box label {
-            color: var(--muted);
-            font-weight: 500;
-            font-size: 14px;
-        }
+        .auth-box label { color: var(--muted); font-weight: 500; font-size: 14px; }
         .auth-box input {
-            flex: 1;
-            min-width: 200px;
-            padding: 12px 18px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            color: var(--text);
-            font-size: 14px;
-            outline: none;
-            transition: 0.3s;
+            flex: 1; min-width: 200px; padding: 12px 18px;
+            background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+            border-radius: 12px; color: var(--text); font-size: 14px;
+            outline: none; transition: 0.3s;
         }
         .auth-box input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(108,99,255,0.15); }
         .auth-box .btn-auth {
-            padding: 12px 28px;
-            background: var(--primary);
-            border: none;
-            border-radius: 12px;
-            color: #fff;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.3s;
-            font-size: 14px;
+            padding: 12px 28px; background: var(--primary);
+            border: none; border-radius: 12px; color: #fff;
+            font-weight: 600; cursor: pointer; transition: 0.3s; font-size: 14px;
         }
         .auth-box .btn-auth:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(108,99,255,0.3); }
 
-        .msg-auth {
-            padding: 12px 18px;
-            border-radius: 12px;
-            font-size: 14px;
-            display: none;
-        }
+        .msg-auth { padding: 12px 18px; border-radius: 12px; font-size: 14px; display: none; }
         .msg-auth.success { display: block; background: rgba(78,203,141,0.12); color: var(--success); border: 1px solid rgba(78,203,141,0.15); }
         .msg-auth.error { display: block; background: rgba(232,96,122,0.12); color: var(--danger); border: 1px solid rgba(232,96,122,0.15); }
         .msg-auth.info { display: block; background: rgba(108,99,255,0.08); color: var(--primary); border: 1px solid rgba(108,99,255,0.1); }
 
-        /* STATS */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin-bottom: 32px;
-        }
-        .stat-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 22px 20px;
-            text-align: center;
-        }
-        .stat-card .num { font-size: 34px; font-weight: 700; letter-spacing: -0.5px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+        .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 20px; text-align: center; }
+        .stat-card .num { font-size: 34px; font-weight: 700; }
         .stat-card .lbl { color: var(--muted); font-size: 13px; margin-top: 2px; }
         .stat-card.green .num { color: var(--success); }
         .stat-card.red .num { color: var(--danger); }
@@ -126,51 +75,82 @@
         .stat-card.blue .num { color: #64B5F6; }
         .stat-card.purple .num { color: var(--primary); }
 
-        /* CHARTS */
-        .charts-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-            margin-bottom: 32px;
-        }
-        .chart-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 24px;
-        }
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px; }
+        .chart-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
         .chart-card h3 { font-size: 15px; font-weight: 600; color: var(--muted); margin-bottom: 16px; }
         .chart-card .wrap { height: 270px; }
 
-        /* FEEDBACK */
-        .feedback-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 24px;
+        .feedbacks-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+        .feedbacks-card h3 {
+            font-size: 16px; font-weight: 600; color: var(--muted); margin-bottom: 16px;
+            display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
         }
-        .feedback-card h3 { font-size: 15px; font-weight: 600; color: var(--muted); margin-bottom: 16px; }
-        .feedback-card .btn-group { display: flex; gap: 12px; flex-wrap: wrap; }
-        .feedback-card .btn-fb {
-            padding: 10px 28px;
-            border: none;
-            border-radius: 12px;
-            color: #fff;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.3s;
-            font-size: 14px;
+        .feedbacks-card h3 .count-badge {
+            background: var(--primary); color: #fff;
+            padding: 3px 12px; border-radius: 100px; font-size: 12px; font-weight: 600;
         }
-        .btn-fb.green { background: var(--success); }
-        .btn-fb.red { background: var(--danger); }
-        .btn-fb:hover { transform: translateY(-2px); }
-        .btn-fb.green:hover { box-shadow: 0 8px 25px rgba(78,203,141,0.3); }
-        .btn-fb.red:hover { box-shadow: 0 8px 25px rgba(232,96,122,0.3); }
-        .feedback-card .fb-msg { color: var(--muted); font-size: 14px; margin-left: 16px; }
+
+        .feedback-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px; }
+        .feedback-stat { padding: 14px; border-radius: 12px; text-align: center; }
+        .feedback-stat.correct { background: rgba(255,217,61,0.1); border: 1px solid rgba(255,217,61,0.2); }
+        .feedback-stat.total { background: rgba(108,99,255,0.1); border: 1px solid rgba(108,99,255,0.2); }
+        .feedback-stat .num { font-size: 22px; font-weight: 700; }
+        .feedback-stat.correct .num { color: var(--warning); }
+        .feedback-stat.total .num { color: var(--primary); }
+        .feedback-stat .lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+        .feedback-list { max-height: 700px; overflow-y: auto; padding-right: 6px; }
+        .feedback-list::-webkit-scrollbar { width: 6px; }
+        .feedback-list::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 10px; }
+
+        .feedback-item {
+            padding: 18px 20px; margin-bottom: 12px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 12px; border-left: 4px solid var(--primary);
+            transition: all 0.3s;
+        }
+        .feedback-item:hover { background: rgba(255,255,255,0.05); }
+
+        .feedback-item .head {
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 10px; margin-bottom: 10px;
+        }
+        .feedback-item .verdict {
+            padding: 4px 14px; border-radius: 100px;
+            font-size: 12px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            background: rgba(108,99,255,0.15); color: var(--primary);
+        }
+        .feedback-item .user {
+            color: var(--muted); font-size: 13px;
+        }
+
+        .feedback-item .stars {
+            font-size: 20px;
+            margin-bottom: 8px;
+            letter-spacing: 2px;
+        }
+
+        .feedback-item .comment-block {
+            margin-top: 12px; padding: 10px 14px;
+            background: rgba(108,99,255,0.08);
+            border-left: 3px solid var(--primary);
+            border-radius: 8px; font-size: 13px;
+            color: rgba(255,255,255,0.85);
+        }
+        .feedback-item .comment-block .label {
+            color: var(--primary); font-weight: 600;
+            font-size: 11px; text-transform: uppercase;
+            letter-spacing: 0.5px; margin-bottom: 4px; display: block;
+        }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+        .empty-state .icon { font-size: 48px; display: block; margin-bottom: 12px; }
 
         @media (max-width: 768px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .charts-grid { grid-template-columns: 1fr; }
+            .feedback-stats { grid-template-columns: 1fr; }
             .auth-box { flex-direction: column; align-items: stretch; }
             .admin-header { flex-direction: column; text-align: center; }
         }
@@ -178,46 +158,50 @@
 </head>
 <body>
     <div class="container">
-        <!-- HEADER -->
         <div class="admin-header">
-            <h1>🔐 <span>Administration</span> <span class="sub">• Tableau de bord </span></h1>
+            <h1>🔐 <span>Administration</span> <span class="sub">• Tableau de bord</span></h1>
+            <div class="header-actions">
+                <a href="index.html" class="nav-link">🏠 Accueil</a>
+                <a href="dashboard.html" class="nav-link">📊 Dashboard</a>
+            </div>
         </div>
 
-        <!-- AUTH -->
         <div class="auth-box">
             <label>🔑 Clé API</label>
             <input type="password" id="apiKey" placeholder="Saisissez votre clé d'accès" />
-            <button class="btn-auth" onclick="loadAdminStats()">📊 Charger</button>
+            <button class="btn-auth" onclick="loadAdminStats()">🔓 Charger</button>
             <div id="authMessage" class="msg-auth info">🔐 Veuillez vous authentifier</div>
+            <div style="color: #7A849C; font-size: 12px; width: 100%; margin-top: 4px;">
+                🔒 Votre clé est hachée (SHA-256) avant vérification en base.
+            </div>
         </div>
 
-        <!-- STATS -->
-        <div class="stats-grid" id="statsGrid">
+        <div class="stats-grid">
             <div class="stat-card blue"><div class="num" id="adminTotal">0</div><div class="lbl">📊 Total analyses</div></div>
             <div class="stat-card green"><div class="num" id="adminPos">0</div><div class="lbl">✅ Positifs</div></div>
             <div class="stat-card red"><div class="num" id="adminNeg">0</div><div class="lbl">❌ Négatifs</div></div>
-            <div class="stat-card purple"><div class="num" id="adminRate">0%</div><div class="lbl">📈 Taux satisfaction</div></div>
+            <div class="stat-card purple"><div class="num" id="adminRate">0%</div><div class="lbl">📈 Part des avis positifs</div></div>
         </div>
 
-        <!-- CHARTS -->
         <div class="charts-grid">
             <div class="chart-card"><h3>📊 Prédictions par jour (7 derniers jours)</h3><div class="wrap"><canvas id="dailyChart"></canvas></div></div>
             <div class="chart-card"><h3>🎯 Répartition des sentiments</h3><div class="wrap"><canvas id="pieChart"></canvas></div></div>
         </div>
 
-        <!-- FEEDBACK -->
-        <div class="feedback-card">
-            <h3>👍 Feedback utilisateur</h3>
-            <div class="btn-group">
-                <button class="btn-fb green" onclick="sendFeedback('positif')">👍 Utile</button>
-                <button class="btn-fb red" onclick="sendFeedback('negatif')">👎 Pas utile</button>
-                <span class="fb-msg" id="fbMessage"></span>
+        <div class="feedbacks-card">
+            <h3>💬 Feedbacks utilisateur <span class="count-badge" id="feedbackCount">0</span></h3>
+            <div class="feedback-stats">
+                <div class="feedback-stat total"><div class="num" id="sfTotal">0</div><div class="lbl">📊 Total</div></div>
+                <div class="feedback-stat correct"><div class="num" id="sfAvgRating">—</div><div class="lbl">⭐ Note moyenne</div></div>
+            </div>
+            <div class="feedback-list" id="feedbacksContainer">
+                <div class="empty-state"><span class="icon">💬</span>Aucun feedback.</div>
             </div>
         </div>
     </div>
 
     <script>
-        const API_URL = "http://localhost:8002";
+        const API_URL = "http://127.0.0.1:8002";
         let dailyChart = null, pieChart = null;
 
         function showAuthMsg(type, text) {
@@ -239,7 +223,7 @@
                     return;
                 }
                 const data = await res.json();
-                if (data.status !== 'success') { showAuthMsg('error', '❌ Erreur de chargement'); return; }
+                if (data.status !== 'success') { showAuthMsg('error', '❌ Erreur'); return; }
 
                 showAuthMsg('success', '✅ Données chargées avec succès');
 
@@ -264,26 +248,99 @@
                 renderDailyChart(daily);
                 renderPieChart(pos, neg, neu);
 
+                await loadFeedbacks(key);
             } catch (e) {
                 showAuthMsg('error', '❌ Erreur réseau: ' + e.message);
             }
         }
 
+        async function loadFeedbacks(key) {
+            const container = document.getElementById('feedbacksContainer');
+            try {
+                const res = await fetch(`${API_URL}/admin/feedbacks?limit=200`, {
+                    headers: { 'X-API-Key': key }
+                });
+                if (!res.ok) {
+                    container.innerHTML = '<div class="empty-state">⚠️ Accès refusé</div>';
+                    return;
+                }
+                const data = await res.json();
+                const items = data.data || [];
+
+                const rated = items.filter(f => f.rating != null);
+                const avg = rated.length > 0
+                    ? (rated.reduce((s, f) => s + f.rating, 0) / rated.length).toFixed(1)
+                    : '—';
+
+                document.getElementById('sfTotal').textContent = items.length;
+                document.getElementById('sfAvgRating').textContent = avg;
+                document.getElementById('feedbackCount').textContent = items.length;
+
+                if (items.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><span class="icon">💬</span>Aucun feedback pour le moment.</div>';
+                    return;
+                }
+
+                let html = '';
+                items.forEach(f => {
+                    const stars = f.rating != null
+                        ? '⭐'.repeat(f.rating) + '☆'.repeat(5 - f.rating)
+                        : '—';
+
+                    const userLabel = f.username
+                        ? `👤 ${f.username}`
+                        : `👤 user #${f.user_id}`;
+                    const emailLabel = f.email ? ` • 📧 ${f.email}` : '';
+
+                    html += `
+                        <div class="feedback-item">
+                            <div class="head">
+                                <span class="verdict">💬 Feedback #${f.id}</span>
+                                <span class="user">${userLabel}${emailLabel}</span>
+                            </div>
+                            <div class="stars">${stars}</div>
+                            <div class="comment-block">
+                                <span class="label">💬 Message</span>
+                                "${f.message}"
+                            </div>
+                            <div style="margin-top:10px;">
+                                <button onclick="deleteFeedback(${f.id},'${key}')"
+                                        style="padding:6px 14px;background:#E8607A;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;">
+                                    🗑 Supprimer
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            } catch (e) {
+                container.innerHTML = '<div class="empty-state">⚠️ Erreur de chargement</div>';
+            }
+        }
+
+        async function deleteFeedback(id, key) {
+            if (!confirm('Supprimer ce feedback ?')) return;
+            await fetch(`${API_URL}/admin/feedbacks/${id}`, {
+                method: 'DELETE',
+                headers: { 'X-API-Key': key }
+            });
+            loadFeedbacks(key);
+        }
+
         function renderDailyChart(daily) {
             const ctx = document.getElementById('dailyChart').getContext('2d');
             if (dailyChart) dailyChart.destroy();
-
             if (!daily || daily.length === 0) {
-                dailyChart = new Chart(ctx, { type: 'bar', data: { labels: ['Aucune donnée'], datasets: [{ data: [0], backgroundColor: 'rgba(255,255,255,0.05)' }] } });
+                dailyChart = new Chart(ctx, { type: 'bar',
+                    data: { labels: ['Aucune donnée'],
+                        datasets: [{ data: [0], backgroundColor: 'rgba(255,255,255,0.05)' }] } });
                 return;
             }
-
             const sorted = [...daily].sort((a,b) => new Date(a.jour) - new Date(b.jour));
             const labels = sorted.map(d => d.jour);
             const pos = sorted.map(d => parseInt(d.positifs) || 0);
             const neg = sorted.map(d => parseInt(d.negatifs) || 0);
             const neu = sorted.map(d => parseInt(d.neutres) || 0);
-
             dailyChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -295,8 +352,7 @@
                     ]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
+                    responsive: true, maintainAspectRatio: false,
                     scales: {
                         x: { stacked: true, ticks: { color: '#7A849C' }, grid: { display: false } },
                         y: { stacked: true, ticks: { color: '#7A849C' }, grid: { color: 'rgba(255,255,255,0.05)' } }
@@ -313,32 +369,13 @@
                 type: 'doughnut',
                 data: {
                     labels: ['Positifs', 'Négatifs', 'Neutres'],
-                    datasets: [{ data: [pos, neg, neu], backgroundColor: ['#4ECB8D','#E8607A','#FFD93D'], borderWidth: 0 }]
+                    datasets: [{ data: [pos, neg, neu],
+                        backgroundColor: ['#4ECB8D','#E8607A','#FFD93D'], borderWidth: 0 }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { labels: { color: '#EAEDF5', padding: 16 } } }
-                }
+                options: { responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { labels: { color: '#EAEDF5', padding: 16 } } } }
             });
         }
-
-        async function sendFeedback(type) {
-            const msg = document.getElementById('fbMessage');
-            try {
-                const res = await fetch(`${API_URL}/feedback?sentiment=${type}`, { method: 'POST' });
-                const data = await res.json();
-                msg.textContent = `✅ ${data.message || 'Feedback enregistré'}`;
-                msg.style.color = '#4ECB8D';
-                setTimeout(() => { msg.textContent = ''; }, 3000);
-            } catch (e) {
-                msg.textContent = `❌ Erreur: ${e.message}`;
-                msg.style.color = '#E8607A';
-            }
-        }
-
-        // Auto-load with default key if you want
-        // document.getElementById('apiKey').value = 'Cle_naouel_2026';
     </script>
 </body>
 </html>

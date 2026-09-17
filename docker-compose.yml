@@ -1,6 +1,3 @@
-# mon projet sentiment - stack complète
-# postgres + redis + minio + fastapi + nginx + worker
-
 services:
 
   # --- base de données principale ---
@@ -24,7 +21,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # cache rapide pour les jobs du worker
+  # --- cache rapide pour les jobs du worker ---
   redis:
     image: redis:7-alpine
     container_name: cache_redis
@@ -34,24 +31,24 @@ services:
     networks:
       - mon_reseau_local
 
-  # stockage fichiers type S3 (modèles, exports, etc.)
+  # --- stockage fichiers type S3 ---
   minio:
-    image: minio/minio:latest
-    container_name: mon_stockage_minio
+    image: pgsty/minio:latest
+    container_name: stockage_minio
     restart: unless-stopped
-    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin123
-    ports:
-      - "9000:9000"   # API S3
-      - "9001:9001"   # console web
+    command: server /data --console-address ":9001"
     volumes:
       - donnee_minio:/data
     networks:
       - mon_reseau_local
 
-  # l'API python / fastapi
+  # --- l'API python / fastapi ---
   backend:
     build:
       context: .
@@ -64,6 +61,7 @@ services:
       - ./app:/app
       - ./collectors:/app/collectors
       - ./src:/app/src
+      - C:/Users/Naouel Moussa/.cache/huggingface:/root/.cache/huggingface
     environment:
       DB_HOST: db
       DB_PORT: 5432
@@ -72,6 +70,9 @@ services:
       DB_NAME: sentiment_db
       REDIS_HOST: redis
       MINIO_HOST: minio:9000
+      TRANSFORMERS_OFFLINE: "0"
+      HF_HUB_OFFLINE: "0"
+      HF_HOME: /root/.cache/huggingface
     depends_on:
       db:
         condition: service_healthy
@@ -81,9 +82,10 @@ services:
         condition: service_started
     networks:
       - mon_reseau_local
-    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    command: sh -c "pip install --quiet 'transformers==4.36.0' 'tokenizers==0.15.2' 'huggingface-hub==0.20.3' 'numpy<2.0' && uvicorn main:app --host 0.0.0.0 --port 8000"
 
-  # nginx sert le fichier HTML directement
+
+  # --- nginx sert le fichier HTML directement ---
   frontend:
     image: nginx:alpine
     container_name: mon_interface_web
@@ -91,15 +93,17 @@ services:
     ports:
       - "3000:80"
     volumes:
-      - ./frontend:/usr/share/nginx/html:ro   # TOUT le dossier frontend
+      - ./frontend:/usr/share/nginx/html:ro
     depends_on:
       - backend
     networks:
       - mon_reseau_local
 
-  # worker de collecte et d'analyse en arrière-plan
+  # --- worker de collecte et d'analyse en arrière-plan ---
   worker:
-    build: .
+    build:
+      context: .
+      dockerfile: app/Dockerfile
     container_name: mon_worker
     restart: unless-stopped
     environment:
@@ -110,6 +114,14 @@ services:
       DB_NAME: sentiment_db
       REDIS_HOST: redis
       MINIO_HOST: minio:9000
+      TRANSFORMERS_OFFLINE: "1"
+      HF_HUB_OFFLINE: "1"
+      HF_HOME: /root/.cache/huggingface
+    volumes:
+      - ./worker.py:/app/worker.py:ro
+      - ./src:/app/src
+      - ./collectors:/app/collectors
+      - C:/Users/Naouel Moussa/.cache/huggingface:/root/.cache/huggingface
     depends_on:
       db:
         condition: service_healthy

@@ -1,43 +1,34 @@
-# J'importe les trucs pour la base de données
-import sqlalchemy as sql
 import os
 from dotenv import load_dotenv
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
 
-# Je lance le chargement de mon petit fichier .env
 load_dotenv()
 
-# --- MES VARIABLES DE CONNEXION ---
-# Je les récupère une par une pour être sûr
-hote_db = os.getenv("DB_HOST", "db")
-port_du_serveur = os.getenv("DB_PORT", "5432")
-nom_de_ma_bdd = os.getenv("DB_NAME", "sentiment_db")
-mon_login = os.getenv("DB_USER", "Naouel")
-mon_mot_de_passe = os.getenv("DB_PASSWORD", "Pino2026")
+# --- Variables de connexion ---
+DB_HOST     = os.getenv("DB_HOST", "localhost")
+DB_PORT     = os.getenv("DB_PORT", "5432")
+DB_NAME     = os.getenv("DB_NAME", "sentiment_db")
+DB_USER     = os.getenv("DB_USER", "Naouel")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "Pino2026")
 
-# Petit print pour vérifier si ça marche (je le commenterai après)
-# print("Connexion en cours sur :", hote_db)
+DATABASE_URL = (
+    f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}"
+    f"@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+)
 
-# Fabrication du lien pour SQLAlchemy (un peu long mais ça marche)
-chaine_finale = "postgresql://" + mon_login + ":" + mon_mot_de_passe
-chaine_finale += "@" + hote_db + ":" + port_du_serveur + "/" + nom_de_ma_bdd
+# --- Moteur et session SQLAlchemy ---
+moteur_db = create_engine(DATABASE_URL, echo=False, future=True)
+SessionLocale = sessionmaker(bind=moteur_db, autoflush=False, autocommit=False)
 
-# Création du moteur de recherche
-moteur_db = sql.create_engine(chaine_finale)
-
-# Je configure ma session ici
-from sqlalchemy.orm import sessionmaker as createur_session
-SessionLocale = createur_session(bind=moteur_db)
-
-# La base pour mes futures classes
-from sqlalchemy.ext.declarative import declarative_base
+# --- Base déclarative (les modèles hériteront de cette classe) ---
 BaseModel = declarative_base()
 
-# La fonction magique pour ouvrir/fermer la db
+
+# --- Dépendance FastAPI ---
 def get_db():
-    ma_session_ouverte = SessionLocale()
+    db = SessionLocale()
     try:
-        # Je renvoie la session pour qu'on puisse l'utiliser
-        yield ma_session_ouverte
+        yield db
     finally:
-        # Toujours bien fermer la porte à la fin !
-        ma_session_ouverte.close()
+        db.close()

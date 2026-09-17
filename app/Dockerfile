@@ -14,10 +14,15 @@ RUN apt-get update && apt-get install -y \
 # --- Installation des packages ---
 # On copie d'abord le fichier de dépendances
 COPY app/requirements.txt /app/requirements.txt
-# On installe tout, et on rajoute redis manuellement (oublié dans le txt ?)
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt redis
 
+# AJOUT: Installer PyTorch CPU d'abord (plus léger que la version CUDA)
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir torch==2.1.0 --index-url https://download.pytorch.org/whl/cpu
+
+# On installe tout, et on rajoute redis manuellement (oublié dans le txt ?)
+RUN pip install --no-cache-dir -r requirements.txt redis
+
+# AJOUT: Installer playwright et ses navigateurs
 RUN playwright install chromium
 RUN playwright install-deps
 
