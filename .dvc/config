@@ -1,7 +1,12 @@
 [core]
-    remote = mon_coffre
+    remote = mon_stockage
 ['remote "mon_coffre"']
     url = s3://dvc-bucket
+    endpointurl = http://localhost:9000
+    access_key_id = minioadmin
+    secret_access_key = minioadmin123
+['remote "mon_stockage"']
+    url = s3://dvc-data
     endpointurl = http://localhost:9000
     access_key_id = minioadmin
     secret_access_key = minioadmin123
