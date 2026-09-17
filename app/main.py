@@ -592,4 +592,14 @@ def metrics():
 
 
 if __name__ == "__main__":
+	HEAD
     uvicorn.run(app, host="127.0.0.1", port=8002)
+
+    print("=" * 60)
+    print("🚀 API d'Analyse de Sentiments (avec cache et monitoring)")
+    print("📡 http://127.0.0.1:8002")
+    print("📚 Documentation: http://127.0.0.1:8002/docs")
+    print("📊 Métriques: http://127.0.0.1:8002/metrics")
+    print("=" * 60)
+    uvicorn.run(app, host="0.0.0.0", port=8002) 
+	daa49319f296419b873dc089b6c614520e7e506a
