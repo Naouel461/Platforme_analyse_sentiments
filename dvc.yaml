@@ -1,0 +1,20 @@
+stages:
+  etl:
+    cmd: python app/etl_pipeline.py
+    deps:
+      - app/etl_pipeline.py
+      - data/raw/
+    outs:
+      - data/processed/clean.csv
+    desc: "Nettoie et normalise les données brutes"
+
+  split:
+    cmd: python app/data_splitter.py
+    deps:
+      - app/data_splitter.py
+      - data/processed/clean.csv
+    outs:
+      - data/processed/train.csv
+      - data/processed/val.csv
+      - data/processed/test.csv
+    desc: "Découpe les données en 3 ensembles"

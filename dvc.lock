@@ -1,0 +1,43 @@
+schema: '2.0'
+stages:
+  etl:
+    cmd: python app/etl_pipeline.py
+    deps:
+    - path: app/etl_pipeline.py
+      hash: md5
+      md5: e0424d66b93552d145ba68a6c4578c86
+      size: 7861
+    - path: data/raw/
+      hash: md5
+      md5: 25ef77c851cd2b1642314e3295d5fa3b.dir
+      size: 24200
+      nfiles: 4
+    outs:
+    - path: data/processed/clean.csv
+      hash: md5
+      md5: 67c75d91bc28a77d423e4ce36328dad6
+      size: 20197
+  split:
+    cmd: python app/data_splitter.py
+    deps:
+    - path: app/data_splitter.py
+      hash: md5
+      md5: df28870492499ce577f75f9ee1205e96
+      size: 5140
+    - path: data/processed/clean.csv
+      hash: md5
+      md5: 67c75d91bc28a77d423e4ce36328dad6
+      size: 20197
+    outs:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: 7fb759f20dbac4c66bc1ab0a3cb6c8f2
+      size: 3204
+    - path: data/processed/train.csv
+      hash: md5
+      md5: d1d872d8d65a564451e5238d5060df05
+      size: 17220
+    - path: data/processed/val.csv
+      hash: md5
+      md5: e0265f8a20bd8c792e8ec984139bf182
+      size: 2424
