@@ -100,7 +100,6 @@ data/processed/*
 # EXÉCUTABLES ET OUTILS
 # ============================================================
 mc.exe
-/mon_modele.pkl
 
 # ============================================================
 # FICHIERS TEMPORAIRES
@@ -133,3 +132,4 @@ package.json.bak
 .idea/
 *.swp
 *.swo
+/mon_modele.pkl
