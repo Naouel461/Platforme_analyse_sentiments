@@ -65,6 +65,24 @@
         .msg-auth.error { display: block; background: rgba(232,96,122,0.12); color: var(--danger); border: 1px solid rgba(232,96,122,0.15); }
         .msg-auth.info { display: block; background: rgba(108,99,255,0.08); color: var(--primary); border: 1px solid rgba(108,99,255,0.1); }
 
+        /* ONGLETS */
+        .tabs {
+            display: flex; gap: 8px; margin-bottom: 24px;
+            background: rgba(0,0,0,0.2); padding: 6px;
+            border-radius: 100px; flex-wrap: wrap;
+        }
+        .tab {
+            padding: 10px 22px; border-radius: 100px;
+            font-size: 14px; font-weight: 600;
+            color: var(--muted); cursor: pointer; transition: 0.3s;
+        }
+        .tab:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+        .tab.active { background: var(--primary); color: #fff; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* STATS */
         .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
         .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 20px; text-align: center; }
         .stat-card .num { font-size: 34px; font-weight: 700; }
@@ -75,11 +93,13 @@
         .stat-card.blue .num { color: #64B5F6; }
         .stat-card.purple .num { color: var(--primary); }
 
+        /* CHARTS */
         .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px; }
         .chart-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
         .chart-card h3 { font-size: 15px; font-weight: 600; color: var(--muted); margin-bottom: 16px; }
         .chart-card .wrap { height: 270px; }
 
+        /* FEEDBACKS */
         .feedbacks-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
         .feedbacks-card h3 {
             font-size: 16px; font-weight: 600; color: var(--muted); margin-bottom: 16px;
@@ -121,15 +141,8 @@
             text-transform: uppercase; letter-spacing: 0.5px;
             background: rgba(108,99,255,0.15); color: var(--primary);
         }
-        .feedback-item .user {
-            color: var(--muted); font-size: 13px;
-        }
-
-        .feedback-item .stars {
-            font-size: 20px;
-            margin-bottom: 8px;
-            letter-spacing: 2px;
-        }
+        .feedback-item .user { color: var(--muted); font-size: 13px; }
+        .feedback-item .stars { font-size: 20px; margin-bottom: 8px; letter-spacing: 2px; }
 
         .feedback-item .comment-block {
             margin-top: 12px; padding: 10px 14px;
@@ -144,8 +157,68 @@
             letter-spacing: 0.5px; margin-bottom: 4px; display: block;
         }
 
+        /* BOUTONS ACTION */
+        .action-bar {
+            display: flex; gap: 12px; flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .btn-action {
+            padding: 10px 20px; border: none; border-radius: 12px;
+            font-size: 14px; font-weight: 600; cursor: pointer;
+            transition: 0.3s; display: flex; align-items: center; gap: 8px;
+        }
+        .btn-action.primary { background: var(--primary); color: #fff; }
+        .btn-action.danger { background: var(--danger); color: #fff; }
+        .btn-action.success { background: var(--success); color: #fff; }
+        .btn-action.warning { background: var(--warning); color: #000; }
+        .btn-action:hover { transform: translateY(-2px); }
+        .btn-action:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* TABLE */
+        .data-table {
+            width: 100%; border-collapse: collapse;
+            background: var(--card); border-radius: var(--radius);
+            overflow: hidden;
+        }
+        .data-table th {
+            text-align: left; padding: 14px 18px;
+            background: rgba(0,0,0,0.3); color: var(--muted);
+            font-weight: 600; font-size: 13px;
+            border-bottom: 1px solid var(--border);
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .data-table td {
+            padding: 14px 18px; font-size: 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+        }
+        .data-table tr:last-child td { border-bottom: none; }
+        .data-table tr:hover { background: rgba(255,255,255,0.02); }
+        .data-table .role-admin { color: var(--warning); font-weight: 600; }
+        .data-table .role-user { color: var(--muted); }
+
+        /* CACHE */
+        .cache-info {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 24px;
+            margin-bottom: 20px;
+        }
+        .cache-size-big {
+            font-size: 48px; font-weight: 800;
+            color: var(--primary); text-align: center;
+            margin-bottom: 8px;
+        }
+        .cache-label { text-align: center; color: var(--muted); font-size: 14px; }
+
         .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
         .empty-state .icon { font-size: 48px; display: block; margin-bottom: 12px; }
+
+        .flash-msg {
+            padding: 12px 18px; border-radius: 12px;
+            margin-bottom: 16px; font-size: 14px;
+            display: none;
+        }
+        .flash-msg.success { display: block; background: rgba(78,203,141,0.12); color: var(--success); border: 1px solid rgba(78,203,141,0.15); }
+        .flash-msg.error { display: block; background: rgba(232,96,122,0.12); color: var(--danger); border: 1px solid rgba(232,96,122,0.15); }
 
         @media (max-width: 768px) {
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
@@ -158,6 +231,7 @@
 </head>
 <body>
     <div class="container">
+        <!-- HEADER -->
         <div class="admin-header">
             <h1>🔐 <span>Administration</span> <span class="sub">• Tableau de bord</span></h1>
             <div class="header-actions">
@@ -166,6 +240,7 @@
             </div>
         </div>
 
+        <!-- AUTH -->
         <div class="auth-box">
             <label>🔑 Clé API</label>
             <input type="password" id="apiKey" placeholder="Saisissez votre clé d'accès" />
@@ -176,26 +251,67 @@
             </div>
         </div>
 
-        <div class="stats-grid">
-            <div class="stat-card blue"><div class="num" id="adminTotal">0</div><div class="lbl">📊 Total analyses</div></div>
-            <div class="stat-card green"><div class="num" id="adminPos">0</div><div class="lbl">✅ Positifs</div></div>
-            <div class="stat-card red"><div class="num" id="adminNeg">0</div><div class="lbl">❌ Négatifs</div></div>
-            <div class="stat-card purple"><div class="num" id="adminRate">0%</div><div class="lbl">📈 Part des avis positifs</div></div>
+        <!-- MESSAGE FLASH -->
+        <div id="flashMsg" class="flash-msg"></div>
+
+        <!-- ONGLETS -->
+        <div class="tabs">
+            <div class="tab active" data-tab="stats" onclick="switchTab('stats')">📊 Statistiques</div>
+            <div class="tab" data-tab="feedbacks" onclick="switchTab('feedbacks')">💬 Feedbacks</div>
+            <div class="tab" data-tab="cache" onclick="switchTab('cache')">🧠 Cache BERT</div>
+            <div class="tab" data-tab="users" onclick="switchTab('users')">👥 Utilisateurs</div>
         </div>
 
-        <div class="charts-grid">
-            <div class="chart-card"><h3>📊 Prédictions par jour (7 derniers jours)</h3><div class="wrap"><canvas id="dailyChart"></canvas></div></div>
-            <div class="chart-card"><h3>🎯 Répartition des sentiments</h3><div class="wrap"><canvas id="pieChart"></canvas></div></div>
-        </div>
-
-        <div class="feedbacks-card">
-            <h3>💬 Feedbacks utilisateur <span class="count-badge" id="feedbackCount">0</span></h3>
-            <div class="feedback-stats">
-                <div class="feedback-stat total"><div class="num" id="sfTotal">0</div><div class="lbl">📊 Total</div></div>
-                <div class="feedback-stat correct"><div class="num" id="sfAvgRating">—</div><div class="lbl">⭐ Note moyenne</div></div>
+        <!-- ONGLET STATS -->
+        <div class="tab-content active" id="tab-stats">
+            <div class="stats-grid">
+                <div class="stat-card blue"><div class="num" id="adminTotal">0</div><div class="lbl">📊 Total analyses</div></div>
+                <div class="stat-card green"><div class="num" id="adminPos">0</div><div class="lbl">✅ Positifs</div></div>
+                <div class="stat-card red"><div class="num" id="adminNeg">0</div><div class="lbl">❌ Négatifs</div></div>
+                <div class="stat-card purple"><div class="num" id="adminRate">0%</div><div class="lbl">📈 Part des avis positifs</div></div>
             </div>
-            <div class="feedback-list" id="feedbacksContainer">
-                <div class="empty-state"><span class="icon">💬</span>Aucun feedback.</div>
+            <div class="charts-grid">
+                <div class="chart-card"><h3>📊 Prédictions par jour (7 derniers jours)</h3><div class="wrap"><canvas id="dailyChart"></canvas></div></div>
+                <div class="chart-card"><h3>🎯 Répartition des sentiments</h3><div class="wrap"><canvas id="pieChart"></canvas></div></div>
+            </div>
+        </div>
+
+        <!-- ONGLET FEEDBACKS -->
+        <div class="tab-content" id="tab-feedbacks">
+            <div class="feedbacks-card">
+                <h3>💬 Feedbacks utilisateur <span class="count-badge" id="feedbackCount">0</span></h3>
+                <div class="feedback-stats">
+                    <div class="feedback-stat total"><div class="num" id="sfTotal">0</div><div class="lbl">📊 Total</div></div>
+                    <div class="feedback-stat correct"><div class="num" id="sfAvgRating">—</div><div class="lbl">⭐ Note moyenne</div></div>
+                </div>
+                <div class="feedback-list" id="feedbacksContainer">
+                    <div class="empty-state"><span class="icon">💬</span>Aucun feedback.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ONGLET CACHE -->
+        <div class="tab-content" id="tab-cache">
+            <div class="cache-info">
+                <div class="cache-size-big" id="cacheSize">0</div>
+                <div class="cache-label">entrées dans le cache BERT</div>
+            </div>
+            <div class="action-bar">
+                <button class="btn-action primary" onclick="loadCache()">🔄 Rafraîchir</button>
+                <button class="btn-action danger" onclick="clearCache()">🗑️ Vider le cache</button>
+            </div>
+            <div id="cacheContainer">
+                <div class="empty-state"><span class="icon">🧠</span>Cliquez sur "Rafraîchir" pour voir le cache.</div>
+            </div>
+        </div>
+
+        <!-- ONGLET USERS -->
+        <div class="tab-content" id="tab-users">
+            <div class="action-bar">
+                <button class="btn-action primary" onclick="loadUsers()">🔄 Rafraîchir</button>
+            </div>
+            <div id="usersContainer">
+                <div class="empty-state"><span class="icon">👥</span>Cliquez sur "Rafraîchir" pour voir les utilisateurs.</div>
             </div>
         </div>
     </div>
@@ -203,16 +319,40 @@
     <script>
         const API_URL = "http://127.0.0.1:8002";
         let dailyChart = null, pieChart = null;
+        let currentApiKey = "";
 
+        // ============================================================
+        // UTILITAIRES
+        // ============================================================
         function showAuthMsg(type, text) {
             const el = document.getElementById('authMessage');
             el.className = 'msg-auth ' + type;
             el.textContent = text;
         }
 
+        function flash(type, text) {
+            const el = document.getElementById('flashMsg');
+            el.className = 'flash-msg ' + type;
+            el.textContent = text;
+            setTimeout(() => { el.className = 'flash-msg'; el.textContent = ''; }, 4000);
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => {
+                t.classList.toggle('active', t.dataset.tab === tab);
+            });
+            document.querySelectorAll('.tab-content').forEach(c => {
+                c.classList.toggle('active', c.id === 'tab-' + tab);
+            });
+        }
+
+        // ============================================================
+        // CHARGEMENT STATS
+        // ============================================================
         async function loadAdminStats() {
             const key = document.getElementById('apiKey').value.trim();
             if (!key) { showAuthMsg('error', 'Veuillez saisir votre clé API'); return; }
+            currentApiKey = key;
             showAuthMsg('info', '⏳ Chargement...');
 
             try {
@@ -249,21 +389,23 @@
                 renderPieChart(pos, neg, neu);
 
                 await loadFeedbacks(key);
+                await loadCache(key, false);
+                await loadUsers(key, false);
             } catch (e) {
                 showAuthMsg('error', '❌ Erreur réseau: ' + e.message);
             }
         }
 
+        // ============================================================
+        // FEEDBACKS
+        // ============================================================
         async function loadFeedbacks(key) {
             const container = document.getElementById('feedbacksContainer');
             try {
                 const res = await fetch(`${API_URL}/admin/feedbacks?limit=200`, {
                     headers: { 'X-API-Key': key }
                 });
-                if (!res.ok) {
-                    container.innerHTML = '<div class="empty-state">⚠️ Accès refusé</div>';
-                    return;
-                }
+                if (!res.ok) return;
                 const data = await res.json();
                 const items = data.data || [];
 
@@ -277,7 +419,7 @@
                 document.getElementById('feedbackCount').textContent = items.length;
 
                 if (items.length === 0) {
-                    container.innerHTML = '<div class="empty-state"><span class="icon">💬</span>Aucun feedback pour le moment.</div>';
+                    container.innerHTML = '<div class="empty-state"><span class="icon">💬</span>Aucun feedback.</div>';
                     return;
                 }
 
@@ -286,10 +428,7 @@
                     const stars = f.rating != null
                         ? '⭐'.repeat(f.rating) + '☆'.repeat(5 - f.rating)
                         : '—';
-
-                    const userLabel = f.username
-                        ? `👤 ${f.username}`
-                        : `👤 user #${f.user_id}`;
+                    const userLabel = f.username ? `👤 ${f.username}` : `👤 user #${f.user_id}`;
                     const emailLabel = f.email ? ` • 📧 ${f.email}` : '';
 
                     html += `
@@ -304,7 +443,7 @@
                                 "${f.message}"
                             </div>
                             <div style="margin-top:10px;">
-                                <button onclick="deleteFeedback(${f.id},'${key}')"
+                                <button onclick="deleteFeedback(${f.id})"
                                         style="padding:6px 14px;background:#E8607A;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:600;cursor:pointer;">
                                     🗑 Supprimer
                                 </button>
@@ -314,19 +453,157 @@
                 });
                 container.innerHTML = html;
             } catch (e) {
-                container.innerHTML = '<div class="empty-state">⚠️ Erreur de chargement</div>';
+                container.innerHTML = '<div class="empty-state">⚠️ Erreur</div>';
             }
         }
 
-        async function deleteFeedback(id, key) {
+        async function deleteFeedback(id) {
             if (!confirm('Supprimer ce feedback ?')) return;
             await fetch(`${API_URL}/admin/feedbacks/${id}`, {
                 method: 'DELETE',
-                headers: { 'X-API-Key': key }
+                headers: { 'X-API-Key': currentApiKey }
             });
-            loadFeedbacks(key);
+            flash('success', '✅ Feedback supprimé');
+            loadFeedbacks(currentApiKey);
         }
 
+        // ============================================================
+        // CACHE
+        // ============================================================
+        async function loadCache(key = null, showFlash = true) {
+            const k = key || currentApiKey;
+            if (!k) { flash('error', '❌ Authentifiez-vous d\'abord'); return; }
+
+            const container = document.getElementById('cacheContainer');
+            try {
+                const res = await fetch(`${API_URL}/admin/cache?limit=100`, {
+                    headers: { 'X-API-Key': k }
+                });
+                if (!res.ok) {
+                    container.innerHTML = '<div class="empty-state">⚠️ Accès refusé</div>';
+                    return;
+                }
+                const data = await res.json();
+                document.getElementById('cacheSize').textContent = data.cache_size || 0;
+
+                const items = data.data || [];
+                if (items.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><span class="icon">🧠</span>Cache vide.</div>';
+                    return;
+                }
+
+                let html = `
+                    <table class="data-table">
+                        <thead><tr><th>Texte</th><th>Sentiment</th><th>Score</th></tr></thead>
+                        <tbody>
+                `;
+                items.forEach(item => {
+                    const sent = (item.sentiment || '').toUpperCase();
+                    const cls = sent === 'POSITIVE' ? 'pos' : sent === 'NEGATIVE' ? 'neg' : 'neu';
+                    const text = (item.text || '').substring(0, 80) + ((item.text || '').length > 80 ? '...' : '');
+                    html += `
+                        <tr>
+                            <td>${text}</td>
+                            <td><span style="color: ${sent === 'POSITIVE' ? '#4ECB8D' : sent === 'NEGATIVE' ? '#E8607A' : '#FFD93D'};">${sent}</span></td>
+                            <td>${Number(item.score).toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+                html += '</tbody></table>';
+                container.innerHTML = html;
+
+                if (showFlash) flash('success', `✅ ${items.length} entrée(s) chargée(s)`);
+            } catch (e) {
+                container.innerHTML = '<div class="empty-state">⚠️ Erreur</div>';
+            }
+        }
+
+        async function clearCache() {
+            if (!currentApiKey) { flash('error', '❌ Authentifiez-vous d\'abord'); return; }
+            if (!confirm('Vider tout le cache BERT ?')) return;
+
+            try {
+                const res = await fetch(`${API_URL}/admin/cache`, {
+                    method: 'DELETE',
+                    headers: { 'X-API-Key': currentApiKey }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    flash('success', `✅ ${data.message || 'Cache vidé'}`);
+                    loadCache(currentApiKey, false);
+                } else {
+                    flash('error', `❌ ${data.detail || 'Erreur'}`);
+                }
+            } catch (e) {
+                flash('error', '❌ ' + e.message);
+            }
+        }
+
+        // ============================================================
+        // USERS
+        // ============================================================
+        async function loadUsers(key = null, showFlash = true) {
+            const k = key || currentApiKey;
+            if (!k) { flash('error', '❌ Authentifiez-vous d\'abord'); return; }
+
+            const container = document.getElementById('usersContainer');
+            try {
+                const res = await fetch(`${API_URL}/admin/users?limit=100`, {
+                    headers: { 'X-API-Key': k }
+                });
+                if (!res.ok) {
+                    container.innerHTML = '<div class="empty-state">⚠️ Accès refusé</div>';
+                    return;
+                }
+                const data = await res.json();
+                const items = data.data || [];
+
+                if (items.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><span class="icon">👥</span>Aucun utilisateur.</div>';
+                    return;
+                }
+
+                let html = `
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Rôle</th>
+                                <th>Créé le</th>
+                                <th>Dernière connexion</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                items.forEach(u => {
+                    const created = u.created_at ? new Date(u.created_at).toLocaleString('fr-FR') : '—';
+                    const lastLogin = u.last_login ? new Date(u.last_login).toLocaleString('fr-FR') : 'Jamais';
+                    const roleCls = u.role === 'admin' ? 'role-admin' : 'role-user';
+                    html += `
+                        <tr>
+                            <td>#${u.id}</td>
+                            <td><strong>${u.username}</strong></td>
+                            <td>${u.email}</td>
+                            <td><span class="${roleCls}">${u.role}</span></td>
+                            <td>${created}</td>
+                            <td>${lastLogin}</td>
+                        </tr>
+                    `;
+                });
+                html += '</tbody></table>';
+                container.innerHTML = html;
+
+                if (showFlash) flash('success', `✅ ${items.length} utilisateur(s)`);
+            } catch (e) {
+                container.innerHTML = '<div class="empty-state">⚠️ Erreur</div>';
+            }
+        }
+
+        // ============================================================
+        // GRAPHIQUES
+        // ============================================================
         function renderDailyChart(daily) {
             const ctx = document.getElementById('dailyChart').getContext('2d');
             if (dailyChart) dailyChart.destroy();

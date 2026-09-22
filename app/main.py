@@ -1,3 +1,9 @@
+# ============================================================
+# FICHIER : app/main.py
+# RÔLE : Backend FastAPI complet
+# VERSION : Option A (cache + users admin)
+# ============================================================
+
 import uvicorn
 from fastapi import FastAPI, Query, Depends, HTTPException, Security, Request, Header
 from fastapi.middleware.cors import CORSMiddleware
@@ -498,7 +504,7 @@ def test_sentiment(input: TextInput):
     return {"text": input.text, "sentiment": sentiment, "score": score}
 
 # ============================================================
-# Feedback du site (username + email copiés dans la table)
+# Feedback du site
 # ============================================================
 @app.post("/site-feedback")
 def post_site_feedback(feedback: SiteFeedbackModel,
@@ -535,18 +541,22 @@ def post_site_feedback(feedback: SiteFeedbackModel,
 # ============================================================
 # Endpoints Admin
 # ============================================================
+
+# --- STATS ---
 @app.get("/admin/stats")
 def admin_stats(api_key: str = Depends(verifier_api_key)):
+    """🔑 Statistiques globales"""
     stats = get_stats()
     if not stats:
         return {"status": "error", "message": "Erreur stats"}
     return {"status": "success", "data": stats}
 
 
+# --- FEEDBACKS ---
 @app.get("/admin/feedbacks")
 def admin_feedbacks(api_key: str = Depends(verifier_api_key),
                     limit: int = Query(200)):
-    """Liste des feedbacks : id, user_id, username, email, rating, message."""
+    """🔑 Liste des feedbacks"""
     conn = get_db_connection()
     if not conn:
         raise HTTPException(status_code=500, detail="DB error")
@@ -566,6 +576,7 @@ def admin_feedbacks(api_key: str = Depends(verifier_api_key),
 @app.delete("/admin/feedbacks/{feedback_id}")
 def delete_feedback(feedback_id: int,
                     api_key: str = Depends(verifier_api_key)):
+    """🔑 Supprime un feedback"""
     conn = get_db_connection()
     if not conn:
         raise HTTPException(status_code=500, detail="DB error")
@@ -578,10 +589,67 @@ def delete_feedback(feedback_id: int,
         conn.close()
 
 
+# --- CACHE (NOUVEAU) ---
+@app.get("/admin/cache")
+def admin_cache(api_key: str = Depends(verifier_api_key),
+                limit: int = Query(50)):
+    """🔑 Voir le cache mémoire des prédictions BERT"""
+    cache_items = list(cache_pred.items())[:limit]
+    return {
+        "status": "success",
+        "cache_size": len(cache_pred),
+        "returned": len(cache_items),
+        "data": [
+            {"text": text, "sentiment": sent, "score": score}
+            for text, (score, sent) in cache_items
+        ]
+    }
+
+
+@app.delete("/admin/cache")
+def clear_admin_cache(api_key: str = Depends(verifier_api_key)):
+    """🔑 Vide le cache mémoire"""
+    size_before = len(cache_pred)
+    cache_pred.clear()
+    return {
+        "status": "success",
+        "message": f"Cache vidé ({size_before} entrées supprimées)",
+        "cache_size_before": size_before,
+        "cache_size_after": 0
+    }
+
+
+# --- USERS (NOUVEAU) ---
+@app.get("/admin/users")
+def admin_users(api_key: str = Depends(verifier_api_key),
+                limit: int = Query(100)):
+    """🔑 Liste des utilisateurs"""
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="DB error")
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("""
+            SELECT id, username, email, role, created_at, last_login
+            FROM users
+            ORDER BY id DESC LIMIT %s
+        """, (limit,))
+        data = cur.fetchall()
+        return {"total": len(data), "data": data}
+    finally:
+        conn.close()
+
+
+# --- RELOAD MODEL (NOUVEAU) ---
 @app.post("/admin/reload-model")
 def reload_model(api_key: str = Depends(verifier_api_key)):
-    return {"status": "success", "message": "Modèle rechargé",
-            "timestamp": datetime.now().isoformat()}
+    """🔑 Recharge le modèle BERT (stub)"""
+    return {
+        "status": "success",
+        "message": "Modèle rechargé avec succès",
+        "timestamp": datetime.now().isoformat()
+    }
+
 
 # ============================================================
 # Prometheus Metrics
@@ -592,14 +660,4 @@ def metrics():
 
 
 if __name__ == "__main__":
-	HEAD
     uvicorn.run(app, host="127.0.0.1", port=8002)
-
-    print("=" * 60)
-    print("🚀 API d'Analyse de Sentiments (avec cache et monitoring)")
-    print("📡 http://127.0.0.1:8002")
-    print("📚 Documentation: http://127.0.0.1:8002/docs")
-    print("📊 Métriques: http://127.0.0.1:8002/metrics")
-    print("=" * 60)
-    uvicorn.run(app, host="0.0.0.0", port=8002) 
-	daa49319f296419b873dc089b6c614520e7e506a

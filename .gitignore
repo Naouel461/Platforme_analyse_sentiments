@@ -74,11 +74,16 @@ MANIFEST
 # Ce qu'on garde : les fichiers .dvc et les .gitignore créés par DVC
 
 # Dossier data : ignorer le contenu MAIS garder les .dvc
-/data
-/data/**
-!/data/**/
-!/data/**/*.dvc
-!/data/**/.gitignore
+# Dossier data/ — géré par DVC (ne pas ignorer le dossier en entier)
+# data/raw/ et data/processed/ sont gérés par DVC
+# On ignore seulement le contenu, mais on garde :
+#   - data/*.dvc (pointeurs DVC)
+#   - data/.gitignore (créé par DVC)
+data/raw/*
+!data/raw.dvc
+!data/.gitignore
+data/processed/*
+!data/processed/*.dvc
 
 # Dossier models : ignorer le contenu MAIS garder les .dvc
 /models
