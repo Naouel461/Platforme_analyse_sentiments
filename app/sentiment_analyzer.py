@@ -14,7 +14,7 @@ classifier = pipeline(
 print("✅ Modèle BERT chargé avec succès")
 
 def mon_ia(txt):
-    """Analyse le sentiment avec BERT"""
+    # Analyse le sentiment avec BERT
     if not txt or not isinstance(txt, str) or len(txt.strip()) < 3:
         return {"sentiment": "NEUTRAL", "confiance": 0, "lang": "unknown"}
 

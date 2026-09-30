@@ -1,17 +1,16 @@
-# Utilisation de la version slim pour pas que l'image pèse 3 tonnes
+
 FROM python:3.11-slim
 
-# On se met dans /app, c'est plus propre
 WORKDIR /app
 
-# --- Setup du système ---
+#  Setup du système 
 # Besoin de gcc pour compiler certaines libs python un peu capricieuses
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# --- Installation des packages ---
+#  Installation des packages 
 # On copie d'abord le fichier de dépendances
 COPY app/requirements.txt /app/requirements.txt
 
@@ -26,7 +25,7 @@ RUN pip install --no-cache-dir -r requirements.txt redis
 RUN playwright install chromium
 RUN playwright install-deps
 
-# --- Code source ---
+#  Code source 
 # On récupère tout le reste du projet ici
 COPY . /app
 
