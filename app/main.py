@@ -1,11 +1,10 @@
 # ============================================================
 # FICHIER : app/main.py
-# RÔLE : Backend FastAPI complet
-# VERSION : Option A (cache + users admin)
+# RÔLE : Backend FastAPI complet + endpoint async BERT
 # ============================================================
 
 import uvicorn
-from fastapi import FastAPI, Query, Depends, HTTPException, Security, Request, Header
+from fastapi import FastAPI, Query, Depends, HTTPException, Security, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import APIKeyHeader
 from datetime import datetime
@@ -18,15 +17,17 @@ import hashlib
 import hmac
 import base64
 import secrets
+import time
+import redis
 from dotenv import load_dotenv
 from transformers import pipeline
 import torch
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 from fastapi.responses import Response
 from starlette.middleware.base import BaseHTTPMiddleware
-import time
 from sqlalchemy.orm import Session
 from database import get_db
+from pydantic import BaseModel
 
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -39,6 +40,9 @@ warnings.filterwarnings('ignore')
 REQUESTS = Counter('api_requests_total', 'Total des requêtes HTTP')
 LATENCY = Histogram('api_latency_seconds', 'Latence des requêtes en secondes')
 
+# ============================================================
+# BERT (utilisé pour l'endpoint synchrone /recherche_avis)
+# ============================================================
 device = 0 if torch.cuda.is_available() else -1
 classifier = pipeline(
     "sentiment-analysis",
@@ -50,6 +54,17 @@ classifier = pipeline(
 
 cache_pred = {}
 
+# ============================================================
+# REDIS (pour l'endpoint async)
+# ============================================================
+try:
+    r_redis = redis.Redis(host="redis", port=6379, decode_responses=True)
+    r_redis.ping()
+    print("✅ Redis connecté", flush=True)
+except Exception as e:
+    print(f"⚠️ Redis non disponible: {e}", flush=True)
+    r_redis = None
+
 from collectors.google_reviews_scraper import collecter_avis_google_auto_sync
 
 app = FastAPI(title="Analyse de sentiments - Google Reviews")
@@ -59,9 +74,9 @@ app.add_exception_handler(429, _rate_limit_exceeded_handler)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["Content-Type", "Authorization", "X-API-Key"],
 )
 
 class PrometheusMiddleware(BaseHTTPMiddleware):
@@ -204,13 +219,13 @@ def save_search_and_predictions(keyword, source_name="google", limit=10, results
             for r in results:
                 cur.execute("""
                     INSERT INTO predictions
-                    (search_id, source_id, text, sentiment, sentiment_score, language, metadata_json)
+                    (search_id, source_id, text, sentiment, confidence, language, metadata)
                     VALUES (%s, %s, %s, %s, %s, %s, %s)
                     RETURNING id
                 """, (
                     search_id, source_id,
                     r.get('text', ''), r.get('sentiment', 'NEUTRAL'),
-                    r.get('sentiment_score', 0.0), r.get('language', 'multi'),
+                    r.get('confidence', 0.0), r.get('language', 'multi'),
                     json.dumps(r.get('metadata')) if r.get('metadata') else None,
                 ))
                 prediction_ids.append(cur.fetchone()[0])
@@ -232,7 +247,7 @@ def get_history(limit=50):
     try:
         cur = conn.cursor(cursor_factory=RealDictCursor)
         cur.execute("""
-            SELECT id, text, sentiment, sentiment_score, metadata_json, created_at
+            SELECT id, text, sentiment, confidence, metadata, created_at
             FROM predictions ORDER BY created_at DESC LIMIT %s
         """, (limit,))
         return cur.fetchall()
@@ -271,7 +286,7 @@ def get_stats():
         conn.close()
 
 # ============================================================
-# Analyse de sentiment
+# Analyse de sentiment (BERT synchrone)
 # ============================================================
 def analyser_sentiment(texte):
     if not texte or len(texte.strip()) < 3:
@@ -298,8 +313,6 @@ def analyser_sentiment(texte):
 # ============================================================
 # Pydantic models
 # ============================================================
-from pydantic import BaseModel
-
 class TextInput(BaseModel):
     text: str
 
@@ -412,11 +425,12 @@ def home():
             "source": "Google Maps + DB Cache"}
 
 
+# ---------- VERSION SYNCHRONE (ancienne, BERT direct) ----------
 @app.get("/recherche_avis")
 def recherche_avis(mot_cle: str, limit: int = 5,
                    db: Session = Depends(get_db),
                    user: dict = Depends(get_current_user)):
-    print(f"[Recherche] 🔍 {mot_cle} par {user['username']}")
+    print(f"[Recherche] 🔍 {mot_cle} par {user['username']}", flush=True)
     try:
         avis = collecter_avis_google_auto_sync(mot_cle, limit)
         results = []
@@ -441,8 +455,118 @@ def recherche_avis(mot_cle: str, limit: int = 5,
         return {"search_id": search_id, "keyword": mot_cle,
                 "total": len(results), "data": results}
     except Exception as e:
-        print(f"[Recherche] ⚠️ Erreur: {e}")
+        print(f"[Recherche] ⚠️ Erreur: {e}", flush=True)
         return {"total": 0, "data": [], "error": str(e)}
+
+
+# ---------- VERSION ASYNCHRONE (envoie au worker BERT) ----------
+@app.get("/recherche_avis_async")
+def recherche_avis_async(mot_cle: str, limit: int = 5,
+                         user: dict = Depends(get_current_user)):
+    """Version asynchrone : cache 1h + scrape + worker BERT"""
+
+    if r_redis is None:
+        return {"status": "error", "message": "Redis non disponible"}
+
+    mot_cle = mot_cle.strip()
+
+    # ============================================
+    # 1. VÉRIFIER LE CACHE (recherche récente identique)
+    # ============================================
+    conn = get_db_connection()
+    if not conn:
+        return {"status": "error", "message": "DB error"}
+
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("""
+            SELECT s.id, COUNT(p.id) AS nb_predictions
+            FROM searches s
+            LEFT JOIN predictions p ON p.search_id = s.id
+            WHERE LOWER(s.keyword) = LOWER(%s)
+              AND s.created_at > NOW() - INTERVAL '1 hour'
+              AND s.status != 'failed'
+            GROUP BY s.id
+            HAVING COUNT(p.id) >= %s
+            ORDER BY s.created_at DESC
+            LIMIT 1
+        """, (mot_cle, min(limit, 3)))
+        cached = cur.fetchone()
+        cur.close()
+    except Exception as e:
+        conn.close()
+        return {"status": "error", "message": str(e)}
+    finally:
+        conn.close()
+
+    if cached:
+        print(f"[Async] ♻️ CACHE HIT pour '{mot_cle}' → search_id={cached['id']}", flush=True)
+        return {
+            "status": "cached",
+            "search_id": cached["id"],
+            "total": cached["nb_predictions"],
+            "message": f"Résultats récents trouvés en cache (recherche #{cached['id']})"
+        }
+
+    # ============================================
+    # 2. PAS DE CACHE → SCRAPER
+    # ============================================
+    print(f"[Async] 🔍 Scraping '{mot_cle}'...", flush=True)
+    avis = collecter_avis_google_auto_sync(mot_cle, limit)
+
+    if not avis:
+        return {"status": "empty", "total": 0, "search_id": None}
+
+    # ============================================
+    # 3. CRÉER LA RECHERCHE EN DB
+    # ============================================
+    conn = get_db_connection()
+    if not conn:
+        return {"status": "error", "message": "DB error"}
+
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT id FROM sources WHERE name = %s", ("google",))
+        row = cur.fetchone()
+        source_id = row[0] if row else 1
+
+        cur.execute("""
+            INSERT INTO searches
+            (keyword, source_id, limit_requested, results_count, status, user_id)
+            VALUES (%s, %s, %s, %s, 'pending', %s) RETURNING id
+        """, (mot_cle, source_id, limit, len(avis), user["id"]))
+        search_id = cur.fetchone()[0]
+        conn.commit()
+        cur.close()
+    except Exception as e:
+        conn.rollback()
+        conn.close()
+        return {"status": "error", "message": str(e)}
+    finally:
+        conn.close()
+
+    # ============================================
+    # 4. ENVOYER LES TÂCHES AU WORKER
+    # ============================================
+    nb_envoyes = 0
+    for avis_item in avis:
+        texte = avis_item.get("texte", "")
+        if texte and len(texte.strip()) >= 3:
+            tache = {
+                "text": texte,
+                "search_id": search_id,
+                "source_id": source_id
+            }
+            r_redis.rpush("sentiment_tasks", json.dumps(tache))
+            nb_envoyes += 1
+
+    print(f"[Async] ✅ {nb_envoyes} tâches envoyées au worker (search_id={search_id})", flush=True)
+    return {
+        "status": "queued",
+        "search_id": search_id,
+        "total": nb_envoyes,
+        "message": "Traitement en arrière-plan"
+    }
 
 
 @app.get("/recherches")
@@ -473,7 +597,7 @@ def get_predictions_by_search(search_id: int):
     try:
         cur = conn.cursor(cursor_factory=RealDictCursor)
         cur.execute("""
-            SELECT id, text, sentiment, sentiment_score, language, created_at
+            SELECT id, text, sentiment, confidence, language, created_at
             FROM predictions WHERE search_id = %s ORDER BY id DESC
         """, (search_id,))
         data = cur.fetchall()
@@ -495,6 +619,7 @@ def get_stats_endpoint():
         return {"error": "Impossible de récupérer les statistiques"}
     return stats
 
+
 # ============================================================
 # Endpoint de test
 # ============================================================
@@ -502,6 +627,7 @@ def get_stats_endpoint():
 def test_sentiment(input: TextInput):
     score, sentiment = analyser_sentiment(input.text)
     return {"text": input.text, "sentiment": sentiment, "score": score}
+
 
 # ============================================================
 # Feedback du site
@@ -541,22 +667,17 @@ def post_site_feedback(feedback: SiteFeedbackModel,
 # ============================================================
 # Endpoints Admin
 # ============================================================
-
-# --- STATS ---
 @app.get("/admin/stats")
 def admin_stats(api_key: str = Depends(verifier_api_key)):
-    """🔑 Statistiques globales"""
     stats = get_stats()
     if not stats:
         return {"status": "error", "message": "Erreur stats"}
     return {"status": "success", "data": stats}
 
 
-# --- FEEDBACKS ---
 @app.get("/admin/feedbacks")
 def admin_feedbacks(api_key: str = Depends(verifier_api_key),
                     limit: int = Query(200)):
-    """🔑 Liste des feedbacks"""
     conn = get_db_connection()
     if not conn:
         raise HTTPException(status_code=500, detail="DB error")
@@ -576,7 +697,6 @@ def admin_feedbacks(api_key: str = Depends(verifier_api_key),
 @app.delete("/admin/feedbacks/{feedback_id}")
 def delete_feedback(feedback_id: int,
                     api_key: str = Depends(verifier_api_key)):
-    """🔑 Supprime un feedback"""
     conn = get_db_connection()
     if not conn:
         raise HTTPException(status_code=500, detail="DB error")
@@ -589,11 +709,9 @@ def delete_feedback(feedback_id: int,
         conn.close()
 
 
-# --- CACHE (NOUVEAU) ---
 @app.get("/admin/cache")
 def admin_cache(api_key: str = Depends(verifier_api_key),
                 limit: int = Query(50)):
-    """🔑 Voir le cache mémoire des prédictions BERT"""
     cache_items = list(cache_pred.items())[:limit]
     return {
         "status": "success",
@@ -608,7 +726,6 @@ def admin_cache(api_key: str = Depends(verifier_api_key),
 
 @app.delete("/admin/cache")
 def clear_admin_cache(api_key: str = Depends(verifier_api_key)):
-    """🔑 Vide le cache mémoire"""
     size_before = len(cache_pred)
     cache_pred.clear()
     return {
@@ -619,11 +736,9 @@ def clear_admin_cache(api_key: str = Depends(verifier_api_key)):
     }
 
 
-# --- USERS (NOUVEAU) ---
 @app.get("/admin/users")
 def admin_users(api_key: str = Depends(verifier_api_key),
                 limit: int = Query(100)):
-    """🔑 Liste des utilisateurs"""
     conn = get_db_connection()
     if not conn:
         raise HTTPException(status_code=500, detail="DB error")
@@ -640,10 +755,8 @@ def admin_users(api_key: str = Depends(verifier_api_key),
         conn.close()
 
 
-# --- RELOAD MODEL (NOUVEAU) ---
 @app.post("/admin/reload-model")
 def reload_model(api_key: str = Depends(verifier_api_key)):
-    """🔑 Recharge le modèle BERT (stub)"""
     return {
         "status": "success",
         "message": "Modèle rechargé avec succès",
@@ -660,4 +773,4 @@ def metrics():
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8002)
+    uvicorn.run(app, host="0.0.0.0", port=8000)

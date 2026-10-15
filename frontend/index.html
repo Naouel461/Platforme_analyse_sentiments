@@ -390,7 +390,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        const API_URL = "http://127.0.0.1:8002";
+        const API_URL = window.location.protocol + "//" + window.location.hostname + ":8002";
         const TOKEN_KEY = "sentimentflow_token";
         const USER_KEY = "sentimentflow_user";
 
@@ -547,22 +547,71 @@
             searchBtn.disabled = true;
             searchBtn.textContent = '⏳ Analyse...';
             try {
-                const limit = limitSelect.value;
-                const url = `${API_URL}/recherche_avis?mot_cle=${encodeURIComponent(motCle)}&limit=${limit}`;
+                                const limit = limitSelect.value;
+                const url = `${API_URL}/recherche_avis_async?mot_cle=${encodeURIComponent(motCle)}&limit=${limit}`;
                 const response = await fetch(url, { headers: authHeaders() });
                 if (response.status === 401) {
                     showMessage('error', 'Session expirée, veuillez vous reconnecter');
                     setTimeout(logout, 1500); return;
                 }
                 const data = await response.json();
-                if (data.total === 0) {
+
+                if (data.status === 'empty' || !data.search_id) {
                     showMessage('info', `Aucun avis trouvé pour "${motCle}"`);
                     resultsSection.classList.remove('active');
                     statsContainer.classList.remove('active');
                     chartContainer.classList.remove('active');
                     return;
                 }
-                renderResults(data, motCle);
+
+                const searchId = data.search_id;
+                const nbAttendu = data.total;
+                showMessage('info', `⏳ Analyse de ${nbAttendu} avis par BERT en cours...`);
+
+                // Polling jusqu'à ce que les résultats soient prêts
+                let results = [];
+                let tentatives = 0;
+                const maxTentatives = 60; // 60 × 1.5s = 90 secondes max
+
+                while (tentatives < maxTentatives) {
+                    await new Promise(r => setTimeout(r, 1500));
+                    try {
+                        const r = await fetch(`${API_URL}/recherches/${searchId}/predictions`, { headers: authHeaders() });
+                        const rdata = await r.json();
+                        if (rdata.total >= nbAttendu && rdata.total > 0) {
+                            results = rdata.data;
+                            break;
+                        }
+                        if (rdata.total > 0) {
+                            showMessage('info', `⏳ ${rdata.total} / ${nbAttendu} avis analysés...`);
+                        }
+                    } catch (e) { /* on ignore et on retente */ }
+                    tentatives++;
+                }
+
+                if (results.length === 0) {
+                    showMessage('error', "L'analyse a échoué ou a pris trop de temps");
+                    return;
+                }
+
+                hideMessage();
+
+                // Adapter le format pour renderResults
+                const formatted = {
+                    total: results.length,
+                    keyword: motCle,
+                    data: results.map(r => ({
+                        id: r.id,
+                        text: r.text,
+                        sentiment: r.sentiment,
+                        sentiment_score: r.confidence,
+                        confidence: r.confidence,
+                        note: 'N/A',
+                        auteur: 'Anonyme',
+                    }))
+                };
+
+                renderResults(formatted, motCle);
             } catch (error) {
                 showMessage('error', `Erreur: ${error.message}`);
             } finally {

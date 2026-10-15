@@ -317,7 +317,7 @@
     </div>
 
     <script>
-        const API_URL = "http://127.0.0.1:8002";
+        const API_URL = window.location.protocol + "//" + window.location.hostname + ":8002";
         let dailyChart = null, pieChart = null;
         let currentApiKey = "";
 

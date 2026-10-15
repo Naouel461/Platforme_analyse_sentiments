@@ -40,6 +40,24 @@ async def scraper_avis_google_auto(mot_cle, limit=10):
                 locale='fr-FR'
             )
 
+            # ====== INJECTION DES COOKIES DE CONSENTEMENT GOOGLE ======
+            await context.add_cookies([
+                {
+                    'name': 'CONSENT',
+                    'value': 'YES+cb.20220419-08-p0.fr+FX+410',
+                    'domain': '.google.com',
+                    'path': '/',
+                },
+                {
+                    'name': 'SOCS',
+                    'value': 'CAESHAgBEhJnd3NfMjAyMzA4MTAtMF9SQzIaAmZyIAEaBgiA_LyaBg',
+                    'domain': '.google.com',
+                    'path': '/',
+                }
+            ])
+            print("[Scraper] 🍪 Cookies de consentement Google injectés.", flush=True)
+            # =========================================================
+
             page = await context.new_page()
             await page.set_extra_http_headers({
                 'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8'

@@ -1,6 +1,8 @@
 services:
 
-  # --- base de données principale ---
+  # ============================================================
+  # BASE DE DONNÉES POSTGRESQL
+  # ============================================================
   db:
     image: postgres:15
     container_name: ma_base_de_donnees
@@ -9,136 +11,146 @@ services:
       POSTGRES_USER: Naouel
       POSTGRES_PASSWORD: Pino2026
       POSTGRES_DB: sentiment_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
-    volumes:
-      - donnee_postgres:/var/lib/postgresql/data
-    networks:
-      - mon_reseau_local
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U Naouel"]
+      test: ["CMD-SHELL", "pg_isready -U Naouel -d sentiment_db"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - sentiment_net
 
-  # --- cache rapide pour les jobs du worker ---
+  # ============================================================
+  # REDIS (file de tâches pour le worker)
+  # ============================================================
   redis:
     image: redis:7-alpine
     container_name: cache_redis
     restart: unless-stopped
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
     networks:
-      - mon_reseau_local
+      - sentiment_net
 
-  # --- stockage fichiers type S3 ---
+  # ============================================================
+  # MINIO (stockage objet pour les splits de données)
+  # ============================================================
   minio:
     image: pgsty/minio:latest
     container_name: stockage_minio
     restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
     ports:
       - "9000:9000"
       - "9001:9001"
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin123
-    command: server /data --console-address ":9001"
-    volumes:
-      - donnee_minio:/data
     networks:
-      - mon_reseau_local
+      - sentiment_net
 
-  # --- l'API python / fastapi ---
+  # ============================================================
+  # BACKEND FastAPI (API + BERT synchrone)
+  # ============================================================
   backend:
     build:
       context: .
-      dockerfile: app/Dockerfile
+      dockerfile: Dockerfile
     container_name: mon_code_python
     restart: unless-stopped
+    command: >
+      sh -c "pip install -r requirements.txt &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=Naouel
+      - DB_PASSWORD=Pino2026
+      - DB_NAME=sentiment_db
+      - SECRET_KEY=changer_cette_cle_en_production
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/app:/app/app
+    volumes:
+      - .:/app
+    working_dir: /app
     ports:
       - "8002:8000"
-    volumes:
-      - ./app:/app
-      - ./collectors:/app/collectors
-      - ./src:/app/src
-      - C:/Users/Naouel Moussa/.cache/huggingface:/root/.cache/huggingface
-    environment:
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_USER: Naouel
-      DB_PASSWORD: Pino2026
-      DB_NAME: sentiment_db
-      REDIS_HOST: redis
-      MINIO_HOST: minio:9000
-      TRANSFORMERS_OFFLINE: "0"
-      HF_HUB_OFFLINE: "0"
-      HF_HOME: /root/.cache/huggingface
     depends_on:
       db:
         condition: service_healthy
       redis:
         condition: service_started
-      minio:
+    networks:
+      - sentiment_net
+
+  # ============================================================
+  # WORKER (analyse BERT en arrière-plan via Redis)
+  # ============================================================
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: mon_worker
+    restart: unless-stopped
+    command: python worker.py
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=Naouel
+      - DB_PASSWORD=Pino2026
+      - DB_NAME=sentiment_db
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/app:/app/app
+    volumes:
+      - .:/app
+    working_dir: /app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
         condition: service_started
     networks:
-      - mon_reseau_local
-    command: sh -c "pip install --quiet 'transformers==4.36.0' 'tokenizers==0.15.2' 'huggingface-hub==0.20.3' 'numpy<2.0' && uvicorn main:app --host 0.0.0.0 --port 8000"
+      - sentiment_net
 
-
-  # --- nginx sert le fichier HTML directement ---
+  # ============================================================
+  # FRONTEND (Nginx - interface web)
+  # ============================================================
   frontend:
     image: nginx:alpine
     container_name: mon_interface_web
     restart: unless-stopped
-    ports:
-      - "3000:80"
     volumes:
       - ./frontend:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "80:80"
     depends_on:
       - backend
     networks:
-      - mon_reseau_local
+      - sentiment_net
 
-  # --- worker de collecte et d'analyse en arrière-plan ---
-  worker:
-    build:
-      context: .
-      dockerfile: app/Dockerfile
-    container_name: mon_worker
-    restart: unless-stopped
-    environment:
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_USER: Naouel
-      DB_PASSWORD: Pino2026
-      DB_NAME: sentiment_db
-      REDIS_HOST: redis
-      MINIO_HOST: minio:9000
-      TRANSFORMERS_OFFLINE: "1"
-      HF_HUB_OFFLINE: "1"
-      HF_HOME: /root/.cache/huggingface
-    volumes:
-      - ./worker.py:/app/worker.py:ro
-      - ./src:/app/src
-      - ./collectors:/app/collectors
-      - C:/Users/Naouel Moussa/.cache/huggingface:/root/.cache/huggingface
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_started
-      minio:
-        condition: service_started
-    networks:
-      - mon_reseau_local
-    command: python worker.py
-
-# volumes persistants
+# ============================================================
+# VOLUMES PERSISTANTS
+# ============================================================
 volumes:
-  donnee_postgres:
-  donnee_minio:
+  postgres_data:
+  redis_data:
+  minio_data:
 
-# réseau interne entre les services
+# ============================================================
+# RÉSEAU INTERNE
+# ============================================================
 networks:
-  mon_reseau_local:
+  sentiment_net:
     driver: bridge
